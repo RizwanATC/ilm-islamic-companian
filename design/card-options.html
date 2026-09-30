@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 40%27%3E%3Cpath d=%27M20 2l5.3 5.2h7.5v7.5L38 20l-5.2 5.3v7.5h-7.5L20 38l-5.3-5.2H7.2v-7.5L2 20l5.2-5.3V7.2h7.5z%27 fill=%27%23f1b56e%27/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sakinah: prayer card options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#15121b;--sand:#f7ecdc;--sand-2:#e9d8c0;--muted:#c8b6a4;--faint:#9d8c80;--amber:#f1b56e;--ease:cubic-bezier(.16,1,.3,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#0e0c12;color:var(--sand);font-family:Urbanist,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.num{font-variant-numeric:tabular-nums}
+.page{max-width:1300px;margin:0 auto;padding:48px 32px 80px}
+.top{display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap;margin-bottom:36px}
+.top h1{font-size:36px;font-weight:700;letter-spacing:-.03em}
+.top p{color:var(--muted);margin-top:8px;font-size:15.5px}
+.switch{display:flex;gap:6px;padding:5px;border-radius:18px;background:rgba(255,241,225,.06);border:1px solid rgba(255,236,214,.1)}
+.switch button{padding:9px 14px;border-radius:13px;font-size:14px;font-weight:600;color:var(--muted)}
+.switch button.on{background:rgba(255,241,225,.14);color:var(--sand)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+@media(max-width:1180px){.grid{grid-template-columns:1fr;max-width:420px;margin:0 auto}}
+.opt h2{font-size:20px;font-weight:700;letter-spacing:-.015em;margin-top:18px}
+.opt h2 span{color:var(--amber);margin-right:8px}
+.opt p{color:var(--muted);font-size:14.5px;line-height:1.5;margin-top:6px}
+.stage{position:relative;border-radius:34px;padding:28px 20px 40px;overflow:hidden;isolation:isolate;
+  background:radial-gradient(300px 240px at 90% -10%,rgba(241,181,110,.28),transparent 65%),radial-gradient(280px 280px at -10% 60%,rgba(158,94,120,.3),transparent 70%),linear-gradient(180deg,#2d2232,#1c1622);
+  box-shadow:0 0 0 1px rgba(255,255,255,.06)}
+.greet{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.av{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg,#e6a39a,#9e5e78);display:grid;place-items:center;font-weight:700;color:var(--ink)}
+.greet small{display:block;font-size:12.5px;color:var(--muted)}
+.greet b{font-size:18px}
+.ghost{height:120px;border-radius:26px;margin-top:22px;background:rgba(255,241,225,.05);border:1px solid rgba(255,236,214,.08)}
+.ghost-t{height:14px;width:120px;border-radius:7px;background:rgba(255,241,225,.08);margin-top:24px}
+
+/* per-prayer theme */
+.card{--a:#f1b56e;--b:#e0787a;--p:.72}
+[data-t=fajr]{--a:#8b7cf0;--b:#f29a8a}
+[data-t=dhuhr]{--a:#57b8e0;--b:#f7d06a}
+[data-t=asr]{--a:#f1b56e;--b:#e0787a}
+[data-t=maghrib]{--a:#f4844a;--b:#c9477e}
+[data-t=isha]{--a:#5b67e6;--b:#9b5de5}
+.card{position:relative;cursor:pointer;border-radius:26px;color:var(--sand);-webkit-tap-highlight-color:transparent}
+.glass{background:rgba(255,241,225,.08);border:1px solid rgba(255,236,214,.18);-webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 14px 34px -14px rgba(0,0,0,.55)}
+.lab{font-size:12.5px;font-weight:700;color:var(--muted)}
+.name{font-size:34px;font-weight:800;letter-spacing:-.035em;line-height:1.05;margin-top:2px}
+.meta{font-size:13.5px;font-weight:600;color:var(--sand-2);margin-top:6px;white-space:nowrap}
+.meta b{font-weight:800;color:var(--sand)}
+.ico{display:block}
+.fade{animation:fade .6s var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateY(6px) scale(.9)}}
+
+/* ---------- A: Aura ---------- */
+.aura{position:relative}
+.aura .orb{position:absolute;border-radius:50%;filter:blur(26px);z-index:-1;transition:background 1s}
+.aura .o1{width:150px;height:150px;right:-6px;top:-24px;background:var(--a);opacity:.85;animation:float1 9s ease-in-out infinite alternate}
+.aura .o2{width:130px;height:130px;right:110px;top:10px;background:var(--b);opacity:.7;animation:float2 11s ease-in-out infinite alternate}
+@keyframes float1{to{transform:translate(-40px,20px) scale(1.1)}}
+@keyframes float2{to{transform:translate(50px,-10px) scale(.9)}}
+.aura .card{display:flex;align-items:center;padding:20px 20px 20px 22px;min-height:122px}
+.aura .txt{flex:1}
+.aura .ico{width:58px;height:58px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35));animation:bob 4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-5px)}}
+
+/* ---------- B: Ring ---------- */
+.ring .card{display:flex;align-items:center;gap:14px;padding:18px 18px 18px 22px;min-height:122px;overflow:hidden}
+.ring .card::before{content:"";position:absolute;right:-40px;top:-40px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,var(--a),transparent 65%);opacity:.35;transition:background 1s}
+.ring .txt{flex:1;position:relative}
+.ring .dial{position:relative;width:84px;height:84px;flex:none}
+.ring .dial svg.r{position:absolute;inset:0;transform:rotate(-90deg)}
+.ring .track{stroke:rgba(255,241,225,.12)}
+.ring .prog{stroke:var(--a);filter:drop-shadow(0 0 4px var(--a));transition:stroke 1s,stroke-dashoffset 1.4s var(--ease);stroke-dasharray:100;stroke-dashoffset:calc(100 - var(--p)*100);transition:stroke-dashoffset 1.4s var(--ease);animation:ringin 1.6s var(--ease) both}
+@keyframes ringin{from{stroke-dashoffset:100}}
+.ring .ico{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px}
+.ring .dot{position:absolute;inset:0;animation:spin 1.4s var(--ease) both;transform:rotate(calc(var(--p)*360deg))}
+.ring .dot i{position:absolute;left:50%;top:-1px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--a),0 0 0 3px rgba(255,255,255,.18)}
+@keyframes spin{from{transform:rotate(0)}}
+
+/* ---------- C: Timeline ---------- */
+.tl .card{padding:18px 20px 16px;overflow:hidden}
+.tl .card::before{content:"";position:absolute;left:-30px;bottom:-60px;width:260px;height:140px;border-radius:50%;background:radial-gradient(closest-side,var(--a),transparent);opacity:.3;transition:background 1s}
+.tl .row{display:flex;justify-content:space-between;align-items:flex-start;position:relative}
+.tl .name{font-size:30px}
+.tl .pill{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:14px;font-size:14px;font-weight:700;background:rgba(255,241,225,.1);border:1px solid rgba(255,236,214,.16)}
+.tl .pill i{width:7px;height:7px;border-radius:50%;background:var(--a);box-shadow:0 0 8px var(--a);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+.tl .track{position:relative;height:4px;border-radius:2px;background:rgba(255,241,225,.12);margin:26px 8px 0}
+.tl .fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;width:calc(var(--p)*100%);background:linear-gradient(90deg,transparent,var(--b),var(--a));transition:width 1.4s var(--ease);animation:grow 1.6s var(--ease) both}
+@keyframes grow{from{width:0}}
+.tl .sun{position:absolute;top:50%;left:calc(var(--p)*100%);width:30px;height:30px;margin:-15px 0 0 -15px;transition:left 1.4s var(--ease);animation:slide 1.6s var(--ease) both;filter:drop-shadow(0 0 8px var(--a))}
+@keyframes slide{from{left:0}}
+.tl .ticks{display:flex;justify-content:space-between;margin:12px 0 0;font-size:11.5px;font-weight:700;color:var(--faint)}
+.tl .ticks span{width:48px;text-align:center}
+.tl .ticks span:first-child{text-align:left}.tl .ticks span:last-child{text-align:right}
+.tl .ticks span.on{color:var(--sand)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <!-- colour prayer icons -->
+    <linearGradient id="g-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe07a"/><stop offset="1" stop-color="#ffa53a"/></linearGradient>
+    <linearGradient id="g-dawn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc47a"/><stop offset="1" stop-color="#ff7d6b"/></linearGradient>
+    <linearGradient id="g-dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a4d"/><stop offset="1" stop-color="#e2485a"/></linearGradient>
+    <linearGradient id="g-cloud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e6dcef"/></linearGradient>
+    <linearGradient id="g-moon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1c2"/><stop offset="1" stop-color="#f3c867"/></linearGradient>
+    <symbol id="c-fajr" viewBox="0 0 24 24"><path d="M4.5 17a7.5 7.5 0 0 1 15 0z" fill="url(#g-dawn)"/><path d="M2 17h20" stroke="#7a4d8c" stroke-width="1.8" stroke-linecap="round"/><path d="M6 20.5h12" stroke="#7a4d8c" stroke-width="1.5" stroke-linecap="round" opacity=".55"/><path d="m18.5 3 .7 1.7 1.8.7-1.8.7-.7 1.7-.7-1.7-1.8-.7 1.8-.7z" fill="#fff4cf"/></symbol>
+    <symbol id="c-dhuhr" viewBox="0 0 24 24"><g stroke="#ffb13d" stroke-width="2" stroke-linecap="round"><path d="M12 1.8v2.4M12 19.8v2.4M1.8 12h2.4M19.8 12h2.4M4.8 4.8l1.7 1.7M17.5 17.5l1.7 1.7M4.8 19.2l1.7-1.7M17.5 6.5l1.7-1.7"/></g><circle cx="12" cy="12" r="5.6" fill="url(#g-sun)"/><circle cx="10.2" cy="10.2" r="1.6" fill="#fff6d6" opacity=".7"/></symbol>
+    <symbol id="c-asr" viewBox="0 0 24 24"><g stroke="#ffb13d" stroke-width="1.8" stroke-linecap="round"><path d="M9 1.8v2M2.6 8.4h2M4.4 3.8l1.4 1.4M13.6 3.8l-1.4 1.4"/></g><circle cx="9" cy="9" r="4.4" fill="url(#g-sun)"/><path d="M17.3 21H8.2a4.2 4.2 0 0 1-.6-8.4 5.3 5.3 0 0 1 10.1 1.3 3.6 3.6 0 0 1-.4 7.1z" fill="url(#g-cloud)" stroke="#cbb9d8" stroke-width=".8"/></symbol>
+    <symbol id="c-maghrib" viewBox="0 0 24 24"><path d="M4 15.5a8 8 0 0 1 16 0z" fill="url(#g-dusk)"/><path d="M2 15.5h20" stroke="#7a4d8c" stroke-width="1.8" stroke-linecap="round"/><path d="M5 18.8h14M8.5 21.8h7" stroke="#9a6aa8" stroke-width="1.5" stroke-linecap="round" opacity=".7"/><path d="M12 3.2v3" stroke="#ff9a4d" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="c-isha" viewBox="0 0 24 24"><path d="M19.5 15.2A8.3 8.3 0 1 1 9.3 3.5a6.6 6.6 0 0 0 10.2 11.7z" fill="url(#g-moon)"/><path d="m18 3 .8 1.9 1.9.8-1.9.8L18 8.4l-.8-1.9-1.9-.8 1.9-.8z" fill="#fff4cf"/><circle cx="21" cy="10.5" r=".9" fill="#fff4cf"/></symbol>
+
+</defs></svg>
+
+<div class="page">
+  <div class="top">
+    <div><h1>Prayer card options</h1><p>Three modern directions, all glass and animated. Tap any card, or use the switch, to see each prayer.</p></div>
+    <div class="switch" id="sw"></div>
+  </div>
+
+  <div class="grid">
+    <section class="opt">
+      <div class="stage">
+        <div class="greet"><div class="av">A</div><div><small>Assalamu alaikum</small><b>Aisha</b></div></div>
+        <div class="aura">
+          <span class="orb o1"></span><span class="orb o2"></span>
+          <div class="card glass" data-t="asr">
+            <div class="txt"><div class="lab">Next prayer</div><div class="name" data-f="name">Asr</div><div class="meta num"><span data-f="time">4:27 PM</span> · in <b data-cd>1:42:18</b></div></div>
+            <svg class="ico" data-f="ico"><use href="#c-asr"/></svg>
+          </div>
+        </div>
+        <div class="ghost-t"></div><div class="ghost"></div>
+      </div>
+      <h2><span>A</span>Aura</h2>
+      <p>Frosted glass over slow, drifting colour glows that change with each prayer. A large colour icon floats on the right. The softest and most modern of the three.</p>
+    </section>
+
+    <section class="opt">
+      <div class="stage">
+        <div class="greet"><div class="av">A</div><div><small>Assalamu alaikum</small><b>Aisha</b></div></div>
+        <div class="ring">
+          <div class="card glass" data-t="asr">
+            <div class="txt"><div class="lab">Next prayer</div><div class="name" data-f="name">Asr</div><div class="meta num"><span data-f="time">4:27 PM</span> · in <b data-cd>1:42:18</b></div></div>
+            <div class="dial">
+              <svg class="r" viewBox="0 0 84 84" fill="none"><circle class="track" cx="42" cy="42" r="37" stroke-width="5"/><circle class="prog" cx="42" cy="42" r="37" stroke-width="5" stroke-linecap="round" pathLength="100"/></svg>
+              <div class="dot"><i></i></div>
+              <svg class="ico" data-f="ico"><use href="#c-asr"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="ghost-t"></div><div class="ghost"></div>
+      </div>
+      <h2><span>B</span>Ring</h2>
+      <p>A progress ring shows how much of the wait since the last prayer has passed, with the prayer's colour icon in the centre. Clean, like a smartwatch complication.</p>
+    </section>
+
+    <section class="opt">
+      <div class="stage">
+        <div class="greet"><div class="av">A</div><div><small>Assalamu alaikum</small><b>Aisha</b></div></div>
+        <div class="tl">
+          <div class="card glass" data-t="asr">
+            <div class="row">
+              <div><div class="lab">Next prayer</div><div class="name" data-f="name">Asr</div><div class="meta num" data-f="time">4:27 PM</div></div>
+              <div class="pill num"><i></i><b data-cd>1:42:18</b></div>
+            </div>
+            <div class="track"><div class="fill"></div><svg class="sun" data-f="ico"><use href="#c-asr"/></svg></div>
+            <div class="ticks"><span>Fajr</span><span>Dhuhr</span><span class="on">Asr</span><span>Maghrib</span><span>Isha</span></div>
+          </div>
+        </div>
+        <div class="ghost-t"></div><div class="ghost"></div>
+      </div>
+      <h2><span>C</span>Day timeline</h2>
+      <p>Your whole day on one line: all five prayers, with a glowing bar and the sun icon moving toward the next one. The most informative, still compact.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+const P=[
+  {n:"Fajr",t:"5:52 AM",cd:54420,ring:.08,tl:.02},
+  {n:"Dhuhr",t:"1:07 PM",cd:80520,ring:.35,tl:.2},
+  {n:"Asr",t:"4:27 PM",cd:6138,ring:.72,tl:.42},
+  {n:"Maghrib",t:"7:11 PM",cd:15960,ring:.4,tl:.62},
+  {n:"Isha",t:"8:21 PM",cd:20160,ring:.3,tl:.85}];
+let idx=2;
+const fmt=t=>`${Math.floor(t/3600)}:${String(Math.floor(t/60)%60).padStart(2,"0")}:${String(t%60).padStart(2,"0")}`;
+const sw=document.getElementById("sw");
+P.forEach((p,i)=>{const b=document.createElement("button");b.textContent=p.n;b.onclick=()=>set(i);sw.appendChild(b)});
+function set(i){
+  idx=i;const p=P[i],k=p.n.toLowerCase();
+  sw.querySelectorAll("button").forEach((b,j)=>b.classList.toggle("on",j===i));
+  document.querySelectorAll(".card").forEach(c=>{
+    c.dataset.t=k;
+    c.style.setProperty("--p",c.closest(".tl")?p.tl:p.ring);
+    c.querySelector('[data-f=name]').textContent=p.n;
+    c.querySelector('[data-f=time]').textContent=p.t;
+    const cd=c.querySelector("[data-cd]");cd.dataset.cd=p.cd;cd.textContent=fmt(p.cd);
+    const ic=c.querySelector('[data-f=ico]');ic.querySelector("use").setAttribute("href","#c-"+k);
+    ic.classList.remove("fade");void ic.getBoundingClientRect();ic.classList.add("fade");
+    c.querySelectorAll(".ticks span").forEach((s,j)=>s.classList.toggle("on",j===i));
+  });
+  document.querySelectorAll(".aura").forEach(a=>a.dataset.t=k);
+}
+document.querySelectorAll(".card").forEach(c=>c.onclick=()=>set((idx+1)%P.length));
+set(2);
+setInterval(()=>document.querySelectorAll("[data-cd]").forEach(el=>{const t=Math.max(0,+el.dataset.cd-1);el.dataset.cd=t;el.textContent=fmt(t)}),1000);
+</script>
+</body>
+</html>
