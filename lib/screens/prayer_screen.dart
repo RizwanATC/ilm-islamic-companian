@@ -123,7 +123,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
     final app = AppState.instance;
     final t = day[p];
     final past = t.isBefore(now);
-    final prayed = app.isPrayed(_date, p);
+    // A prayer that has not started yet cannot have been prayed.
+    final prayed = past && app.isPrayed(_date, p);
     String sub;
     Color subC = C.faint;
     if (p == Prayer.syuruk) {
