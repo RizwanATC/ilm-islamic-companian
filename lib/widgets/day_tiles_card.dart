@@ -13,7 +13,7 @@ class DayTilesPrayerCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   static const _gap = 6.0;
-  static const _height = 132.0;
+  static const _height = 136.0;
   static const _grow = 2.6; // width of the next tile, in small-tile units
   static const _dur = Duration(milliseconds: 700);
   static const _curve = Curves.easeOutCubic;
@@ -149,33 +149,52 @@ class _Tile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     PrayerIcon(prayer, size: 34),
-                    const Spacer(),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(prayer.label,
-                          style: T.ui(22,
-                              w: FontWeight.w800, ls: -.03, h: 1)),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(hmA(time),
-                        maxLines: 1,
-                        overflow: TextOverflow.fade,
-                        softWrap: false,
-                        style: T.ui(12.5, c: C.sand2)),
-                    const SizedBox(height: 8),
-                    Row(children: [
-                      PulseDot(color: tint),
-                      const SizedBox(width: 6),
-                      Flexible(
+                    // Shrinks the text block if it can't fit, e.g. with a
+                    // large system text size, instead of overflowing.
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.bottomLeft,
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(countdown(left),
-                              style: T.ui(14, w: FontWeight.w800)),
+                          alignment: Alignment.bottomLeft,
+                          child: SizedBox(
+                            width: bigWidth - 28,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(prayer.label,
+                                      style: T.ui(22,
+                                          w: FontWeight.w800, ls: -.03, h: 1)),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(hmA(time),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.fade,
+                                    softWrap: false,
+                                    style: T.ui(12.5, c: C.sand2)),
+                                const SizedBox(height: 6),
+                                Row(children: [
+                                  PulseDot(color: tint),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(countdown(left),
+                                          style: T.ui(14, w: FontWeight.w800)),
+                                    ),
+                                  ),
+                                ]),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ]),
+                    ),
                   ],
                 ),
               ),
