@@ -148,7 +148,7 @@ class NextPrayerTimeline extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Row(children: [
-                _PulseDot(color: tint),
+                PulseDot(color: tint),
                 const SizedBox(width: 8),
                 Text(countdown(at.difference(now)),
                     style: T.ui(17, w: FontWeight.w700)),
@@ -235,14 +235,14 @@ class NextPrayerTimeline extends StatelessWidget {
   }
 }
 
-class _PulseDot extends StatefulWidget {
-  const _PulseDot({required this.color});
+class PulseDot extends StatefulWidget {
+  const PulseDot({super.key, required this.color});
   final Color color;
   @override
-  State<_PulseDot> createState() => _PulseDotState();
+  State<PulseDot> createState() => _PulseDotState();
 }
 
-class _PulseDotState extends State<_PulseDot>
+class _PulseDotState extends State<PulseDot>
     with SingleTickerProviderStateMixin {
   late final _c = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 1600))

@@ -8,8 +8,8 @@ import '../data/quran_data.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/day_tiles_card.dart';
 import '../widgets/journey_path.dart';
-import '../widgets/sky_arc_card.dart';
 import 'journey_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -50,7 +50,7 @@ class HomeScreen extends StatelessWidget {
           LocationLabel(onTap: () => onOpenTab(3)),
         ]),
         const SizedBox(height: 26),
-        SkyArcPrayerCard(onTap: () => onOpenTab(1)),
+        DayTilesPrayerCard(onTap: () => onOpenTab(1)),
         const SizedBox(height: 30),
         HomeJourney(onOpen: () => openJourney(context)),
         const SizedBox(height: 12),
