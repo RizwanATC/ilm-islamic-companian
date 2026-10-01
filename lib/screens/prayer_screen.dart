@@ -64,9 +64,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
             const SizedBox(height: 6),
             Text(app.error!, style: T.ui(12.5, c: C.rose, w: FontWeight.w500)),
           ],
-          const SizedBox(height: 22),
-          const NextPrayerTimeline(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
           const Hairline(alpha: .08),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -132,7 +130,6 @@ class _PrayerScreenState extends State<PrayerScreen> {
       sub = 'Sunrise · no prayer';
     } else if (isNext) {
       sub = 'Next · in ${inWords(t.difference(now))}';
-      subC = C.amber;
     } else if (prayed) {
       sub = 'Prayed';
       subC = C.sage;
@@ -161,52 +158,64 @@ class _PrayerScreenState extends State<PrayerScreen> {
           width: 34,
           height: 34,
           child: Icon(app.alerts[p] == true ? LucideIcons.bell : LucideIcons.bellOff,
-              size: 19, color: isNext ? C.amber : C.muted),
+              size: 19, color: isNext ? prayerTint(p) : C.muted),
         ),
       );
     }
-    final nameC = isNext ? C.amber : (prayed ? C.sand2 : C.sand);
-    final row = Container(
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: C.line()))),
-      child: Row(children: [
-        SizedBox(width: 34, child: Center(child: PrayerIcon(p, size: isNext ? 34 : 30))),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(p.label,
-                style: T.ui(isNext ? 18 : 16.5, w: FontWeight.w700, c: nameC)),
-            const SizedBox(height: 2),
-            Text(sub, style: T.ui(12.5, c: subC)),
-          ]),
-        ),
-        Text(hm(t),
-            style: T.ui(isNext ? 20 : 17,
-                w: FontWeight.w700, c: isNext ? C.amber : nameC)),
-        const SizedBox(width: 3),
-        Text(ampm(t), style: T.ui(11, c: C.faint, w: FontWeight.w700)),
-        const SizedBox(width: 12),
-        action,
-      ]),
-    );
-    if (p == Prayer.syuruk) return Opacity(opacity: .5, child: row);
-    if (!isNext) return row;
-    return Stack(children: [
-      Positioned.fill(
-        left: -20,
-        right: -20,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [
-              C.amber.withValues(alpha: .14),
-              C.amber.withValues(alpha: .03),
-              Colors.transparent,
-            ], stops: const [0, .7, 1]),
-          ),
-        ),
+    final tint = prayerTint(p);
+    final nameC = isNext ? C.sand : (prayed ? C.sand2 : C.sand);
+    final content = Row(children: [
+      SizedBox(width: 34, child: Center(child: PrayerIcon(p, size: isNext ? 34 : 30))),
+      const SizedBox(width: 14),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(p.label,
+              style: T.ui(isNext ? 18 : 16.5, w: FontWeight.w700, c: nameC)),
+          const SizedBox(height: 2),
+          Text(sub, style: T.ui(12.5, c: isNext ? tint : subC, w: isNext ? FontWeight.w700 : FontWeight.w600)),
+        ]),
       ),
-      row,
+      Text(hm(t),
+          style: T.ui(isNext ? 20 : 17, w: FontWeight.w700, c: nameC)),
+      const SizedBox(width: 3),
+      Text(ampm(t), style: T.ui(11, c: isNext ? C.sand2 : C.faint, w: FontWeight.w700)),
+      const SizedBox(width: 12),
+      action,
     ]);
+    if (!isNext) {
+      final row = Container(
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: C.line()))),
+        child: content,
+      );
+      return p == Prayer.syuruk ? Opacity(opacity: .5, child: row) : row;
+    }
+    // The next prayer sits in a tinted card in its own colour, matching the
+    // wide tile on Home.
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 13, 4, 13),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [tint.withValues(alpha: .30), C.sand.withValues(alpha: .05)],
+            stops: const [0, .75],
+          ),
+          border: Border.all(color: tint.withValues(alpha: .5)),
+          boxShadow: [
+            BoxShadow(
+                color: tint.withValues(alpha: .35),
+                blurRadius: 26,
+                offset: const Offset(0, 12),
+                spreadRadius: -16),
+          ],
+        ),
+        child: content,
+      ),
+    );
   }
 
   Widget _tool(IconData i, String t, String v, VoidCallback onTap) => Expanded(
