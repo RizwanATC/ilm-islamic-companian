@@ -5,19 +5,27 @@ import '../services/prayer_service.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/sheets.dart';
+import 'explore.dart' show BackGlassButton;
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key, required this.controller});
-  final ScrollController controller;
+  const SettingsScreen({super.key, this.controller, this.onBack = false});
+  final ScrollController? controller;
+
+  /// Opened as a page from Explore: show the back button.
+  final bool onBack;
 
   @override
   Widget build(BuildContext context) {
     final app = AppState.instance;
     return ListView(
       controller: controller,
-      padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 12, 20, 200),
+      padding: EdgeInsets.fromLTRB(
+          20, MediaQuery.of(context).padding.top + 12, 20, onBack ? 60 : 200),
       children: [
-        Text('Settings', style: T.ui(30, w: FontWeight.w700, ls: -.025)),
+        Row(children: [
+          if (onBack) ...[const BackGlassButton(), const SizedBox(width: 12)],
+          Text('Settings', style: T.ui(30, w: FontWeight.w700, ls: -.025)),
+        ]),
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.only(bottom: 20),

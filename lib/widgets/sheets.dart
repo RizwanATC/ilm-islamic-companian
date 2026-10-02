@@ -29,9 +29,9 @@ void showQiblaSheet(BuildContext context) {
           'Face north, then turn until you face the gold arrow. '
           'A live compass needs the phone\'s magnetometer, which comes next.',
           textAlign: TextAlign.center,
-          style: T.ui(13.5, c: C.muted, w: FontWeight.w500, h: 1.45)),
+          style: T.ui(13.5, c: S.muted, w: FontWeight.w500, h: 1.45)),
       const SizedBox(height: 18),
-      AmberButton(label: 'Got it', onTap: () => Navigator.pop(ctx)),
+      SheetButton(label: 'Got it', onTap: () => Navigator.pop(ctx)),
     ]);
   });
 }
@@ -49,7 +49,7 @@ class _QiblaPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
-          ..color = C.sand.withValues(alpha: .15));
+          ..color = S.line(.45));
     for (var i = 0; i < 72; i++) {
       final a = i * math.pi / 36;
       final len = i % 18 == 0 ? 10.0 : 4.0;
@@ -60,7 +60,7 @@ class _QiblaPainter extends CustomPainter {
           p2,
           Paint()
             ..strokeWidth = 1.2
-            ..color = C.sand.withValues(alpha: i % 18 == 0 ? .5 : .15));
+            ..color = Colors.white.withValues(alpha: i % 18 == 0 ? .9 : .4));
     }
     const labels = ['N', 'E', 'S', 'W'];
     for (var i = 0; i < 4; i++) {
@@ -68,7 +68,7 @@ class _QiblaPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
             text: labels[i],
-            style: T.ui(13, w: FontWeight.w700, c: i == 0 ? C.sand : C.faint)),
+            style: T.ui(13, w: FontWeight.w700, c: i == 0 ? S.accent : S.text)),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas,
@@ -82,13 +82,13 @@ class _QiblaPainter extends CustomPainter {
       ..lineTo(12, 0)
       ..lineTo(-12, 0)
       ..close();
-    canvas.drawPath(arrow, Paint()..color = C.amber);
+    canvas.drawPath(arrow, Paint()..color = C.ink);
     final tail = Path()
       ..moveTo(0, r - 40)
       ..lineTo(12, 0)
       ..lineTo(-12, 0)
       ..close();
-    canvas.drawPath(tail, Paint()..color = C.sand.withValues(alpha: .18));
+    canvas.drawPath(tail, Paint()..color = S.line(.4));
     final kaaba = RRect.fromRectAndRadius(
         Rect.fromCenter(center: Offset(0, -r + 26), width: 18, height: 18),
         const Radius.circular(3));
@@ -98,9 +98,9 @@ class _QiblaPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
-          ..color = C.amber);
+          ..color = Colors.white);
     canvas.restore();
-    canvas.drawCircle(c, 7, Paint()..color = C.sand);
+    canvas.drawCircle(c, 7, Paint()..color = Colors.white);
   }
 
   @override
@@ -127,9 +127,9 @@ void showMethodSheet(BuildContext context) {
           Text(
               'In Malaysia, Ilm uses the official JAKIM timetable for your zone. '
               'Other methods are used when you travel outside Malaysia.',
-              style: T.ui(13.5, c: C.muted, w: FontWeight.w500, h: 1.45)),
+              style: T.ui(13.5, c: S.muted, w: FontWeight.w500, h: 1.45)),
           const SizedBox(height: 18),
-          AmberButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
+          SheetButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
         ]);
       }
       return Column(children: [
@@ -147,7 +147,7 @@ void showMethodSheet(BuildContext context) {
             },
           ),
         const SizedBox(height: 10),
-        AmberButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
+        SheetButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
       ]);
     });
   });
@@ -178,7 +178,7 @@ void showAdhanSheet(BuildContext context) {
             },
           ),
         const SizedBox(height: 10),
-        AmberButton(label: 'Save', onTap: () => Navigator.pop(ctx)),
+        SheetButton(label: 'Save', onTap: () => Navigator.pop(ctx)),
       ]);
     });
   });
@@ -205,7 +205,7 @@ void showReciterSheet(BuildContext context) {
             },
           ),
         const SizedBox(height: 10),
-        AmberButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
+        SheetButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
       ]);
     });
   });
@@ -231,9 +231,9 @@ void showZoneSheet(BuildContext context) {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(children: [
-            const Icon(LucideIcons.locateFixed, size: 20, color: C.amber),
+            const Icon(LucideIcons.locateFixed, size: 20, color: S.accent),
             const SizedBox(width: 12),
-            Text('Use my location', style: T.ui(15, c: C.amber, w: FontWeight.w700)),
+            Text('Use my location', style: T.ui(15, c: S.accent, w: FontWeight.w800)),
           ]),
         ),
       ),
@@ -249,7 +249,7 @@ void showZoneSheet(BuildContext context) {
                 Padding(
                   padding: const EdgeInsets.only(top: 18, bottom: 4),
                   child: Text((stateNames[z.state] ?? z.state).toUpperCase(),
-                      style: T.ui(12, c: C.amber, w: FontWeight.w700, ls: .06)),
+                      style: T.ui(12, c: S.accent, w: FontWeight.w800, ls: .06)),
                 ),
               GestureDetector(
                 onTap: () async {
@@ -259,17 +259,17 @@ void showZoneSheet(BuildContext context) {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: C.line()))),
+                      border: Border(bottom: BorderSide(color: S.line(.22)))),
                   child: Row(children: [
                     SizedBox(
                         width: 62,
                         child: Text(z.code,
                             style: T.ui(13.5,
-                                w: FontWeight.w700, c: sel ? C.amber : C.sand2))),
+                                w: FontWeight.w700, c: sel ? S.accent : S.text))),
                     Expanded(
                         child: Text(z.label,
-                            style: T.ui(13.5, c: sel ? C.amber : C.muted, h: 1.35))),
-                    if (sel) const Icon(LucideIcons.check, size: 18, color: C.amber),
+                            style: T.ui(13.5, c: sel ? S.accent : S.muted, w: sel ? FontWeight.w700 : FontWeight.w500, h: 1.35))),
+                    if (sel) const Icon(LucideIcons.check, size: 18, color: S.accent),
                   ]),
                 ),
               ),
@@ -294,7 +294,7 @@ void showSurahSheet(BuildContext context, Surah s, {VoidCallback? onListen}) {
             child: SheetTitle(s.name,
                 sub: '${s.meaning} · ${s.ayahs} ayahs · ${s.meccan ? 'Meccan' : 'Medinan'}'),
           ),
-          Text(s.arabic, style: T.arabic(28, c: C.amber, h: 1.4)),
+          Text(s.arabic, style: T.arabic(28, c: S.text, h: 1.4)),
         ]),
         const SizedBox(height: 18),
         OptionRow(

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -5,10 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'screens/chat_sheet.dart';
+import 'screens/explore.dart';
 import 'screens/home_screen.dart';
 import 'screens/prayer_screen.dart';
 import 'screens/quran_screen.dart';
-import 'screens/settings_screen.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -72,12 +73,12 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _tab = 0;
   bool _compact = false;
-  final _controllers = List.generate(4, (_) => ScrollController());
+  final _controllers = List.generate(3, (_) => ScrollController());
 
   @override
   void initState() {
     super.initState();
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < 3; i++) {
       _controllers[i].addListener(() {
         if (i != _tab) return;
         final c = _controllers[i].offset > 24;
@@ -112,12 +113,20 @@ class _ShellState extends State<Shell> {
           const Positioned.fill(child: _Backdrop()),
           IndexedStack(index: _tab, children: [
             HomeScreen(onOpenTab: _open, controller: _controllers[0]),
-            PrayerScreen(controller: _controllers[1], onOpenSettings: () => _open(3)),
+            PrayerScreen(controller: _controllers[1], onOpenSettings: () => openSettings(context)),
             QuranScreen(controller: _controllers[2]),
-            SettingsScreen(controller: _controllers[3]),
           ]),
           _YunButton(bottom: bottom, compact: _compact),
-          _TabBar(index: _tab, compact: _compact, bottom: bottom, onTap: _open),
+          _TabBar(
+            index: _tab,
+            compact: _compact,
+            bottom: bottom,
+            onTap: _open,
+            onExplore: () {
+              if (AppState.instance.haptics) HapticFeedback.selectionClick();
+              showExploreSheet(context);
+            },
+          ),
         ]),
       ),
     );
@@ -139,83 +148,241 @@ class _Backdrop extends StatelessWidget {
       );
 }
 
-class _TabBar extends StatelessWidget {
+class _TabBar extends StatefulWidget {
   const _TabBar(
-      {required this.index, required this.compact, required this.bottom, required this.onTap});
+      {required this.index,
+      required this.compact,
+      required this.bottom,
+      required this.onTap,
+      required this.onExplore});
   final int index;
   final bool compact;
   final double bottom;
   final void Function(int) onTap;
+  final VoidCallback onExplore;
 
+  /// The three tabs the glass lens slides between; Explore sits in the last
+  /// slot and opens a sheet instead.
   static const _icons = [
     (LucideIcons.house, 'Home'),
     (LucideIcons.landmark, 'Prayer'),
     (LucideIcons.bookOpen, 'Quran'),
-    (LucideIcons.settings, 'Settings'),
   ];
+  static const _last = 2;
+
+  @override
+  State<_TabBar> createState() => _TabBarState();
+}
+
+/// The active tab is a glass lens that glides between slots, stretching
+/// mid-flight like a droplet, and can be dragged along the bar to scrub tabs.
+class _TabBarState extends State<_TabBar> with SingleTickerProviderStateMixin {
+  late final _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 520))
+    ..addListener(_tick);
+  late double _pos = widget.index.toDouble();
+  double _from = 0, _to = 0;
+  bool _dragging = false;
+
+  @override
+  void didUpdateWidget(_TabBar old) {
+    super.didUpdateWidget(old);
+    final to = widget.index.toDouble();
+    if (!_dragging && widget.index != old.index && !(_ctrl.isAnimating && _to == to)) _glide(to);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _glide(double to) {
+    _from = _pos;
+    _to = to;
+    final reduce = MediaQuery.of(context).disableAnimations;
+    if (reduce) {
+      setState(() => _pos = to);
+      return;
+    }
+    _ctrl.forward(from: 0);
+  }
+
+  void _tick() => setState(() => _pos = _from + (_to - _from) * Curves.easeOutCubic.transform(_ctrl.value));
+
+  /// 0 at rest, peaks mid-glide, scaled by how far the lens travels.
+  double get _stretch {
+    if (_dragging) return .08;
+    if (!_ctrl.isAnimating) return 0;
+    return math.sin(math.pi * _ctrl.value) * (.18 * (_to - _from).abs()).clamp(0, .42);
+  }
+
+  void _dragStart(DragStartDetails _) {
+    _ctrl.stop();
+    setState(() => _dragging = true);
+  }
+
+  void _dragUpdate(DragUpdateDetails d, double slot) =>
+      setState(() => _pos = (_pos + d.delta.dx / slot).clamp(0, _TabBar._last).toDouble());
+
+  void _dragEnd(DragEndDetails d, double slot) {
+    final flick = (d.primaryVelocity ?? 0) / slot * .12;
+    final target = (_pos + flick).round().clamp(0, _TabBar._last);
+    setState(() => _dragging = false);
+    _glide(target.toDouble());
+    if (target != widget.index) widget.onTap(target);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final compact = widget.compact;
     final w = MediaQuery.of(context).size.width;
     final side = compact ? 64.0 : 24.0;
     final h = compact ? 54.0 : 66.0;
+    final pad = compact ? 6.0 : 8.0;
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 450),
       curve: Curves.easeOutCubic,
       left: side,
       right: side,
-      bottom: (compact ? 12 : 18) + bottom,
+      bottom: (compact ? 2 : 6) + widget.bottom,
       height: h,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(h / 2),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
           child: Container(
-            padding: EdgeInsets.all(compact ? 6 : 8),
+            padding: EdgeInsets.all(pad),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(h / 2),
               color: const Color(0xFF28202C).withValues(alpha: .55),
               border: Border.all(color: const Color(0x2EFFECD6)),
             ),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              for (var i = 0; i < 4; i++)
-                Expanded(
-                  child: Semantics(
-                    label: _icons[i].$2,
-                    button: true,
-                    selected: i == index,
-                    child: GestureDetector(
-                      onTap: () => onTap(i),
-                      behavior: HitTestBehavior.opaque,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeOutCubic,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(h / 2),
-                          gradient: i == index ? C.amberGradient : null,
-                          boxShadow: i == index
-                              ? [
-                                  BoxShadow(
-                                      color: C.amber.withValues(alpha: .55),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 6),
-                                      spreadRadius: -6)
-                                ]
-                              : null,
-                        ),
-                        child: Icon(_icons[i].$1,
-                            size: compact ? 21 : (w < 360 ? 22 : 25),
-                            color: i == index ? C.ink : C.faint),
-                      ),
+            child: LayoutBuilder(builder: (context, box) {
+              final slot = box.maxWidth / 4;
+              final grow = slot * _stretch;
+              final lensH = box.maxHeight * (1 - _stretch * .22);
+              return GestureDetector(
+                onHorizontalDragStart: _dragStart,
+                onHorizontalDragUpdate: (d) => _dragUpdate(d, slot),
+                onHorizontalDragEnd: (d) => _dragEnd(d, slot),
+                child: Stack(children: [
+                  Positioned(
+                    left: _pos * slot - grow / 2,
+                    top: (box.maxHeight - lensH) / 2,
+                    width: slot + grow,
+                    height: lensH,
+                    child: AnimatedScale(
+                      scale: _dragging ? 1.06 : 1,
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      child: _GlassLens(radius: lensH / 2),
                     ),
                   ),
-                ),
-            ]),
+                  Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    for (var i = 0; i < _TabBar._icons.length; i++)
+                      Expanded(
+                        child: Semantics(
+                          label: _TabBar._icons[i].$2,
+                          button: true,
+                          selected: i == widget.index,
+                          child: GestureDetector(
+                            onTap: () => widget.onTap(i),
+                            behavior: HitTestBehavior.opaque,
+                            child: Icon(_TabBar._icons[i].$1,
+                                size: compact ? 21 : (w < 360 ? 22 : 25),
+                                // Icons light up as the lens passes over them.
+                                color: Color.lerp(C.faint, C.amberLight,
+                                    (1 - (i - _pos).abs()).clamp(0, 1).toDouble())),
+                          ),
+                        ),
+                      ),
+                    Expanded(
+                      child: Semantics(
+                        label: 'Explore',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: widget.onExplore,
+                          behavior: HitTestBehavior.opaque,
+                          child: Icon(LucideIcons.layoutGrid,
+                              size: compact ? 21 : (w < 360 ? 22 : 25), color: C.faint),
+                        ),
+                      ),
+                    ),
+                  ]),
+                ]),
+              );
+            }),
           ),
         ),
       ),
     );
   }
+}
+
+/// Clear, warm-tinted glass: a bright specular rim on top, a faint amber
+/// caustic at the bottom, and a soft drop so it floats over the bar.
+class _GlassLens extends StatelessWidget {
+  const _GlassLens({required this.radius});
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = BorderRadius.circular(radius);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: r,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white.withValues(alpha: .20),
+            Colors.white.withValues(alpha: .06),
+            C.amber.withValues(alpha: .16),
+          ],
+          stops: const [0, .55, 1],
+        ),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: .35),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+              spreadRadius: -6),
+        ],
+      ),
+      child: CustomPaint(painter: _RimPainter(radius)),
+    );
+  }
+}
+
+/// Gradient hairline: bright along the top edge, fading to a warm glint below.
+class _RimPainter extends CustomPainter {
+  _RimPainter(this.radius);
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size s) {
+    final rect = Offset.zero & s;
+    final rr = RRect.fromRectAndRadius(rect.deflate(.5), Radius.circular(radius));
+    canvas.drawRRect(
+      rr,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white.withValues(alpha: .55),
+            Colors.white.withValues(alpha: .08),
+            C.amberLight.withValues(alpha: .35),
+          ],
+          stops: const [0, .5, 1],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RimPainter old) => old.radius != radius;
 }
 
 class _YunButton extends StatefulWidget {
@@ -243,7 +410,7 @@ class _YunButtonState extends State<_YunButton> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final app = AppState.instance;
-    final base = widget.bottom + (widget.compact ? 80 : 98);
+    final base = widget.bottom + (widget.compact ? 70 : 86);
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 450),
       curve: Curves.easeOutCubic,

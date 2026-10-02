@@ -10,6 +10,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/day_tiles_card.dart';
 import '../widgets/journey_path.dart';
+import 'explore.dart' show openSettings;
 import 'journey_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -47,7 +48,7 @@ class HomeScreen extends StatelessWidget {
               Text(app.userName, style: T.ui(20, w: FontWeight.w700, ls: -.015)),
             ]),
           ),
-          LocationLabel(onTap: () => onOpenTab(3)),
+          LocationLabel(onTap: () => openSettings(context)),
         ]),
         const SizedBox(height: 26),
         DayTilesPrayerCard(onTap: () => onOpenTab(1)),
