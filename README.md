@@ -22,15 +22,23 @@ Or from a terminal: `flutter run`.
 - `lib/services/zone_service.dart`: GeoJSON loading and zone lookup
 - `lib/services/prayer_service.dart`: JAKIM fetch/cache and adhan calculation
 - `lib/state/app_state.dart`: settings, prayed marks, journey progress (saved on device)
-- `lib/screens/`: Home, Prayer, Quran, Settings, Journey, and the Yun/Ayu chat
+- `lib/services/prayer_alerts.dart`, `recitation.dart`, `quran_text.dart`, `yun_ai.dart`: alerts, audio, Quran text, AI chat
+- `lib/screens/`: Home, Prayer, Quran, the Quran reader, Settings, Journey, and the Yun/Ayu chat
+- `server/yun-worker/`: the Cloudflare Worker behind the Yun/Ayu chat
 - `test/widget_test.dart`: checks the zone lookup against real Malaysian locations
 
-## Not built yet
+## Features that use the network
 
-- Adhan notifications and audio (the settings are saved, but nothing is scheduled yet)
-- Quran reader and recitation audio (the list, bookmarks and reading position work)
-- Yun/Ayu AI answers (replies are scripted; prayer-time answers use real data)
-- Live Qibla compass (the bearing is correct; the dial doesn't rotate with the phone yet)
+- **Quran reader:** text from api.alquran.cloud (Uthmani script, Sahih International and
+  Abdullah Basmeih translations), saved on the phone after a surah is first opened.
+  Recitation streams from everyayah.com, ayah by ayah, and the reader follows along.
+- **Prayer alerts:** scheduled on the device for the next 7 days and rebuilt when the app opens
+  or settings change. The adhan recording is by Aaqib Azeez (Wikimedia Commons, CC BY-SA 4.0).
+- **Qibla:** the compass dial turns with the phone's magnetometer.
+- **Yun/Ayu answers:** come from Claude through the small server in `server/yun-worker`
+  (see its README to deploy). Build the app with
+  `--dart-define=YUN_API_URL=... --dart-define=YUN_APP_KEY=...` to turn it on; without them
+  the chat uses its built-in sample answers.
 
 ## Design mockups
 
