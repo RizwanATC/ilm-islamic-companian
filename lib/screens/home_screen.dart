@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../data/quran_data.dart';
+import '../services/recitation.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -235,32 +236,62 @@ class AyahCard extends StatefulWidget {
   State<AyahCard> createState() => _AyahCardState();
 }
 
-class _AyahCardState extends State<AyahCard> {
-  static const _dur = 120; // ticks of 100ms = 12s recitation
-  Timer? _timer;
-  int _t = 0;
-  bool _playing = true;
+class _AyahCardState extends State<AyahCard> with SingleTickerProviderStateMixin {
+  static const _surah = 94, _from = 5, _to = 6;
+  final _rec = Recitation.instance;
+  // Drives the waveform while audio plays.
+  late final _wave = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1400));
   final _bars = List.generate(
       30, (i) => .25 + (math.sin(i * 1.7)).abs() * .55 + ((i * 37) % 10) / 50);
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
-      if (_playing && mounted) setState(() => _t = (_t + 1) % (_dur + 10));
-    });
+    _rec.current.addListener(_changed);
+    _rec.playing.addListener(_changed);
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _rec.current.removeListener(_changed);
+    _rec.playing.removeListener(_changed);
+    _wave.dispose();
     super.dispose();
+  }
+
+  void _changed() {
+    if (!mounted) return;
+    _mine && _rec.playing.value ? _wave.repeat() : _wave.stop();
+    setState(() {});
+  }
+
+  /// Whether the shared player is on this card's ayahs.
+  bool get _mine => _rec.isOn(_surah) &&
+      _rec.current.value!.$2 >= _from && _rec.current.value!.$2 <= _to;
+
+  Future<void> _toggle() async {
+    if (_mine) {
+      _rec.playing.value ? await _rec.pause() : await _rec.resume();
+      return;
+    }
+    try {
+      await _rec.play(_surah,
+          from: _from, to: _to, reciter: AppState.instance.reciter);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
+          content: Text('Couldn’t load the recitation. Check your connection.')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final f = math.min(_t / _dur, 1.0);
-    final k = (f * ayahWords.length).floor();
+    final playing = _mine && _rec.playing.value;
+    // Ayah being recited (5 or 6), or null when this card isn't playing.
+    final ayah = _mine ? _rec.current.value!.$2 : null;
+    // ayahWords holds 94:5 then 94:6, each ending with its number marker.
+    final split = ayahWords.indexOf('﴿٥﴾') + 1;
     final reciter = reciters[AppState.instance.reciter].$1;
     return Glass(
       radius: 30,
@@ -285,11 +316,13 @@ class _AyahCardState extends State<AyahCard> {
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 350),
                   style: T.arabic(23,
-                      c: i == k && f < 1
-                          ? C.amber
-                          : (i < k || f >= 1)
-                              ? C.sand
-                              : C.sand.withValues(alpha: .42)),
+                      c: ayah == null
+                          ? C.sand
+                          : (ayah == _from) == (i < split)
+                              ? C.amber
+                              : (ayah == _to && i < split)
+                                  ? C.sand
+                                  : C.sand.withValues(alpha: .42)),
                   child: Text(ayahWords[i]),
                 ),
             ],
@@ -304,7 +337,7 @@ class _AyahCardState extends State<AyahCard> {
         const SizedBox(height: 22),
         Row(children: [
           GestureDetector(
-            onTap: () => setState(() => _playing = !_playing),
+            onTap: _toggle,
             child: Container(
               width: 50,
               height: 50,
@@ -319,7 +352,7 @@ class _AyahCardState extends State<AyahCard> {
                       spreadRadius: -8)
                 ],
               ),
-              child: Icon(_playing ? LucideIcons.pause : LucideIcons.play,
+              child: Icon(playing ? LucideIcons.pause : LucideIcons.play,
                   size: 19, color: C.ink),
             ),
           ),
@@ -327,30 +360,35 @@ class _AyahCardState extends State<AyahCard> {
           Expanded(
             child: SizedBox(
               height: 34,
-              child: Row(children: [
-                for (var i = 0; i < _bars.length; i++)
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 1.2),
-                      child: Center(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          height: 34 *
-                              _bars[i] *
-                              (_playing && i / _bars.length < f
-                                  ? (.7 + .3 * math.sin(_t * .6 + i).abs())
-                                  : 1),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(2),
-                            color: i / _bars.length < f
-                                ? C.amber
-                                : C.sand.withValues(alpha: .2),
+              child: AnimatedBuilder(
+                animation: _wave,
+                builder: (context, _) => Row(children: [
+                  for (var i = 0; i < _bars.length; i++)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 1.2),
+                        child: Center(
+                          child: Container(
+                            height: 34 *
+                                _bars[i] *
+                                (playing
+                                    ? .55 +
+                                        .45 *
+                                            math.sin(_wave.value * 2 * math.pi + i * .7)
+                                                .abs()
+                                    : 1),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(2),
+                              color: ayah != null
+                                  ? C.amber
+                                  : C.sand.withValues(alpha: .2),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-              ]),
+                ]),
+              ),
             ),
           ),
         ]),
@@ -361,8 +399,8 @@ class _AyahCardState extends State<AyahCard> {
                 child: Text(reciter,
                     overflow: TextOverflow.ellipsis,
                     style: T.ui(11.5, c: C.faint))),
-            Text('0:${(f * 12).round().toString().padLeft(2, '0')} / 0:12',
-                style: T.ui(11.5, c: C.faint)),
+            Text(ayah == null ? '94:5–6' : '94:$ayah',
+                style: T.ui(11.5, c: ayah == null ? C.faint : C.amber)),
           ]),
         ),
       ]),
