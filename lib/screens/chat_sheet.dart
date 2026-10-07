@@ -4,16 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../services/prayer_service.dart';
+import '../services/yun_ai.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
 class _Msg {
-  _Msg(this.text, {this.me = false, this.arabic, this.typing = false});
+  _Msg(this.text,
+      {this.me = false, this.arabic, this.typing = false, this.failed = false});
   String text;
   final bool me;
   String? arabic;
   bool typing;
+  bool failed; // an error notice, kept out of the history sent to the AI
 }
 
 void openChat(BuildContext context) {
@@ -80,25 +83,48 @@ class _ChatState extends State<_Chat> {
   }
 
   void _ask(String q) {
-    if (q.trim().isEmpty) return;
+    q = q.trim();
+    if (q.isEmpty || (_msgs.isNotEmpty && _msgs.last.typing)) return;
     setState(() {
       _showSuggestions = false;
-      _msgs.add(_Msg(q.trim(), me: true));
+      _msgs.add(_Msg(q, me: true));
       _msgs.add(_Msg('', typing: true));
     });
     _toBottom();
-    Timer(const Duration(milliseconds: 1300), () {
-      if (!mounted) return;
-      final r = _reply(q);
-      setState(() {
-        final m = _msgs.last;
-        m
-          ..typing = false
-          ..text = r.text
-          ..arabic = r.arabic;
-      });
-      _toBottom();
+    if (YunAi.configured) {
+      _askAi();
+    } else {
+      Timer(const Duration(milliseconds: 1300), () => _answer(_reply(q)));
+    }
+  }
+
+  Future<void> _askAi() async {
+    // Everything after the greeting, minus the typing bubble.
+    final history = [
+      for (final m in _msgs.skip(1))
+        if (!m.typing && !m.failed && m.text.isNotEmpty) (m.me, m.text),
+    ];
+    _Msg r;
+    try {
+      r = _Msg(await YunAi.ask(history));
+    } on YunError catch (e) {
+      r = _Msg(e.message, failed: true);
+    } catch (_) {
+      r = _Msg(YunError('network').message, failed: true);
+    }
+    _answer(r);
+  }
+
+  void _answer(_Msg r) {
+    if (!mounted) return;
+    setState(() {
+      _msgs.last
+        ..typing = false
+        ..text = r.text
+        ..arabic = r.arabic
+        ..failed = r.failed;
     });
+    _toBottom();
   }
 
   void _toBottom() => WidgetsBinding.instance.addPostFrameCallback((_) {
