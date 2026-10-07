@@ -7,6 +7,7 @@ import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/sheets.dart';
 import 'home_screen.dart' show ContinueReading;
+import 'reader_screen.dart';
 
 class QuranScreen extends StatefulWidget {
   const QuranScreen({super.key, required this.controller});
@@ -65,7 +66,8 @@ class _QuranScreenState extends State<QuranScreen> {
         ),
         const SizedBox(height: 26),
         ContinueReading(
-          onPlay: () => showReciterSheet(context),
+          onPlay: () => openReader(context, surah(app.lastSurah),
+              ayah: app.lastAyah, listen: true),
           trailing: 'Juz ${_juzOf(app.lastSurah, app.lastAyah)}',
         ),
         const SizedBox(height: 30),
@@ -200,7 +202,7 @@ class _JuzRow extends StatelessWidget {
     final (sn, a) = juzStarts[j];
     final s = surah(sn);
     return GestureDetector(
-      onTap: () => showSurahSheet(context, s),
+      onTap: () => openReader(context, s, ayah: a),
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),

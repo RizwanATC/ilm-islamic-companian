@@ -8,6 +8,7 @@ import '../data/quran_data.dart';
 import '../services/prayer_service.dart';
 import '../services/zone_service.dart';
 import '../state/app_state.dart';
+import '../screens/reader_screen.dart';
 import '../theme.dart';
 
 // ------------------------------------------------------------------ qibla
@@ -238,9 +239,9 @@ void showAdhanSheet(BuildContext context) {
 
 // ------------------------------------------------------------------ reciter
 
-void showReciterSheet(BuildContext context) {
+Future<void> showReciterSheet(BuildContext context) {
   final app = AppState.instance;
-  showGlassSheet(context, builder: (ctx) {
+  return showGlassSheet(context, builder: (ctx) {
     return StatefulBuilder(builder: (ctx, set) {
       return Column(children: [
         const SheetTitle('Reciter', sub: 'Voice for Quran audio'),
@@ -354,10 +355,11 @@ void showSurahSheet(BuildContext context, Surah s, {VoidCallback? onListen}) {
           title: app.lastSurah == s.number ? 'Continue reading' : 'Start reading here',
           sub: app.lastSurah == s.number
               ? 'You stopped at ayah ${app.lastAyah}'
-              : 'Sets this as your reading spot',
-          onTap: () async {
-            await app.setLastRead(s.number, app.lastSurah == s.number ? app.lastAyah : 1);
-            if (ctx.mounted) Navigator.pop(ctx);
+              : 'Arabic with translation',
+          onTap: () {
+            Navigator.pop(ctx);
+            openReader(context, s,
+                ayah: app.lastSurah == s.number ? app.lastAyah : 1);
           },
         ),
         OptionRow(
@@ -366,7 +368,8 @@ void showSurahSheet(BuildContext context, Surah s, {VoidCallback? onListen}) {
           sub: reciters[app.reciter].$1,
           onTap: () {
             Navigator.pop(ctx);
-            showReciterSheet(context);
+            openReader(context, s,
+                ayah: app.lastSurah == s.number ? app.lastAyah : 1, listen: true);
           },
         ),
         OptionRow(
