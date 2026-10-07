@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../data/quran_data.dart';
@@ -14,35 +15,76 @@ import '../theme.dart';
 void showQiblaSheet(BuildContext context) {
   final app = AppState.instance;
   final b = app.qiblaBearing;
+  final events = FlutterCompass.events;
   showGlassSheet(context, builder: (ctx) {
-    return Column(children: [
-      SheetTitle('Qibla',
-          sub: '${b.toStringAsFixed(0)}° from true north · ${app.placeName}'),
-      const SizedBox(height: 20),
-      SizedBox(
-        width: 230,
-        height: 230,
-        child: CustomPaint(painter: _QiblaPainter(b)),
-      ),
-      const SizedBox(height: 14),
-      Text(
-          'Face north, then turn until you face the gold arrow. '
-          'A live compass needs the phone\'s magnetometer, which comes next.',
-          textAlign: TextAlign.center,
-          style: T.ui(13.5, c: S.muted, w: FontWeight.w500, h: 1.45)),
-      const SizedBox(height: 18),
-      SheetButton(label: 'Got it', onTap: () => Navigator.pop(ctx)),
-    ]);
+    return StreamBuilder<CompassEvent>(
+      stream: events,
+      builder: (ctx, snap) {
+        final heading = snap.data?.heading;
+        final live = heading != null;
+        // How far the phone is from facing the Qibla, -180..180.
+        final off = live ? ((b - heading + 540) % 360) - 180 : 0.0;
+        final aligned = live && off.abs() <= 5;
+        return Column(children: [
+          SheetTitle('Qibla',
+              sub: '${b.toStringAsFixed(0)}° from true north · ${app.placeName}'),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: 230,
+            height: 230,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: heading ?? 0),
+              duration: const Duration(milliseconds: 250),
+              builder: (_, h, _) => CustomPaint(
+                  painter: _QiblaPainter(b, heading: live ? h : 0, aligned: aligned)),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+              !live
+                  ? (events == null
+                      ? 'This phone has no compass. Face north, then turn until '
+                          'you face the gold arrow.'
+                      : 'Finding north…')
+                  : aligned
+                      ? 'You are facing the Qibla.'
+                      : 'Turn ${off > 0 ? 'right' : 'left'} ${off.abs().round()}° '
+                          'until the arrow points straight up.',
+              textAlign: TextAlign.center,
+              style: T.ui(aligned ? 15 : 13.5,
+                  c: aligned ? S.accent : S.muted,
+                  w: aligned ? FontWeight.w800 : FontWeight.w500,
+                  h: 1.45)),
+          if (live) ...[
+            const SizedBox(height: 6),
+            Text('Keep the phone flat and away from metal.',
+                textAlign: TextAlign.center,
+                style: T.ui(12, c: S.muted, w: FontWeight.w500)),
+          ],
+          const SizedBox(height: 18),
+          SheetButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
+        ]);
+      },
+    );
   });
 }
 
 class _QiblaPainter extends CustomPainter {
-  _QiblaPainter(this.bearing);
+  _QiblaPainter(this.bearing, {this.heading = 0, this.aligned = false});
   final double bearing;
+
+  /// Which way the phone points (0 = north); the dial turns against it.
+  final double heading;
+  final bool aligned;
   @override
   void paint(Canvas canvas, Size size) {
     final c = size.center(Offset.zero);
     final r = size.width / 2 - 8;
+    // Rotate the whole dial so north on screen matches real north.
+    canvas.save();
+    canvas.translate(c.dx, c.dy);
+    canvas.rotate(-heading * math.pi / 180);
+    canvas.translate(-c.dx, -c.dy);
     canvas.drawCircle(
         c,
         r,
@@ -82,7 +124,7 @@ class _QiblaPainter extends CustomPainter {
       ..lineTo(12, 0)
       ..lineTo(-12, 0)
       ..close();
-    canvas.drawPath(arrow, Paint()..color = C.ink);
+    canvas.drawPath(arrow, Paint()..color = aligned ? S.accent : C.ink);
     final tail = Path()
       ..moveTo(0, r - 40)
       ..lineTo(12, 0)
@@ -100,11 +142,21 @@ class _QiblaPainter extends CustomPainter {
           ..strokeWidth = 1.5
           ..color = Colors.white);
     canvas.restore();
+    canvas.restore();
+    // Fixed marker at the top: line the arrow up with it.
+    final mark = Path()
+      ..moveTo(c.dx, 0)
+      ..lineTo(c.dx + 7, -10)
+      ..lineTo(c.dx - 7, -10)
+      ..close();
+    canvas.drawPath(
+        mark, Paint()..color = aligned ? S.accent : Colors.white.withValues(alpha: .7));
     canvas.drawCircle(c, 7, Paint()..color = Colors.white);
   }
 
   @override
-  bool shouldRepaint(_QiblaPainter old) => old.bearing != bearing;
+  bool shouldRepaint(_QiblaPainter old) =>
+      old.bearing != bearing || old.heading != heading || old.aligned != aligned;
 }
 
 // ------------------------------------------------------------------ method
