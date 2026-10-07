@@ -88,6 +88,13 @@ class SettingsScreen extends StatelessWidget {
         const SizedBox(height: 30),
         Text('Ilm 1.0 · Prayer times from JAKIM e-Solat in Malaysia',
             textAlign: TextAlign.center, style: T.ui(12, c: C.faint)),
+        const SizedBox(height: 10),
+        Text(
+            'Adhan recording: “The Adhan – Muslim Call to Prayer” by Aaqib Azeez, '
+            'via Wikimedia Commons (User:Atcovi), CC BY-SA 4.0, trimmed. '
+            'commons.wikimedia.org/wiki/File:The_Adhan_-_Muslim_Call_to_Prayer_-_Aaqib_Azeez.mp3',
+            textAlign: TextAlign.center,
+            style: T.ui(11, c: C.faint.withValues(alpha: .8))),
       ],
     );
   }

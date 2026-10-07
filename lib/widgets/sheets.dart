@@ -5,6 +5,7 @@ import 'package:flutter_compass/flutter_compass.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../data/quran_data.dart';
+import '../services/prayer_alerts.dart';
 import '../services/prayer_service.dart';
 import '../services/zone_service.dart';
 import '../state/app_state.dart';
@@ -230,7 +231,19 @@ void showAdhanSheet(BuildContext context) {
               set(() {});
             },
           ),
-        const SizedBox(height: 10),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            PrayerAlerts.instance.test();
+            ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
+                content: Text('A test alert will arrive in 5 seconds.')));
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Text('Send a test alert',
+                style: T.ui(14, w: FontWeight.w700, c: C.amber)),
+          ),
+        ),
         SheetButton(label: 'Save', onTap: () => Navigator.pop(ctx)),
       ]);
     });

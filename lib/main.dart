@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -10,6 +11,7 @@ import 'screens/explore.dart';
 import 'screens/home_screen.dart';
 import 'screens/prayer_screen.dart';
 import 'screens/quran_screen.dart';
+import 'services/prayer_alerts.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
@@ -44,6 +46,21 @@ class _Boot extends StatefulWidget {
 
 class _BootState extends State<_Boot> {
   late final Future<void> _init = AppState.instance.init();
+
+  @override
+  void initState() {
+    super.initState();
+    // Alerts start after the times are known; the permission prompt shows
+    // over Home rather than holding up the splash.
+    _init.whenComplete(() async {
+      await PrayerAlerts.instance.init();
+      PrayerAlerts.instance.reschedule();
+      // flutter run --dart-define=ILM_TEST_ALERT=true fires a sample alert.
+      if (kDebugMode && const bool.fromEnvironment('ILM_TEST_ALERT')) {
+        await PrayerAlerts.instance.test(after: const Duration(seconds: 20));
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) => FutureBuilder(
         future: _init,
