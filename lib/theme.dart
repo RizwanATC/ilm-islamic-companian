@@ -35,6 +35,17 @@ class C {
   );
 }
 
+/// Palette for content sitting on an orange glass sheet. White carries the
+/// text; dark ink marks what is selected or actionable.
+class S {
+  static const text = Colors.white;
+  static final muted = Colors.white.withValues(alpha: .86);
+  static final faint = Colors.white.withValues(alpha: .7);
+  static const accent = C.ink;
+  static Color fill([double a = .16]) => Colors.white.withValues(alpha: a);
+  static Color line([double a = .28]) => Colors.white.withValues(alpha: a);
+}
+
 class T {
   static TextStyle ui(double size,
           {FontWeight w = FontWeight.w600,
@@ -142,9 +153,9 @@ class Hairline extends StatelessWidget {
       Container(height: 1, color: C.line(alpha));
 }
 
-/// Amber pill button.
-class AmberButton extends StatelessWidget {
-  const AmberButton(
+/// Primary action at the foot of a sheet: solid white on the orange glass.
+class SheetButton extends StatelessWidget {
+  const SheetButton(
       {super.key, required this.label, this.onTap, this.enabled = true});
   final String label;
   final VoidCallback? onTap;
@@ -158,71 +169,116 @@ class AmberButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: enabled ? C.amberGradient : null,
-          color: enabled ? null : C.sand.withValues(alpha: .1),
+          color: enabled ? Colors.white : S.fill(.18),
           boxShadow: enabled
               ? [
                   BoxShadow(
-                      color: C.amber.withValues(alpha: .45),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
-                      spreadRadius: -10)
+                      color: const Color(0xFF7A3F12).withValues(alpha: .35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                      spreadRadius: -8)
                 ]
               : null,
         ),
         child: Text(label,
             style: T.ui(16,
-                w: FontWeight.w700, c: enabled ? C.ink : C.muted)),
+                w: FontWeight.w700, c: enabled ? C.ink : S.faint)),
       ),
     );
   }
 }
 
-/// Opens a frosted-glass bottom sheet.
+/// Orange glass bottom sheet, anchored to the bottom edge with rounded top
+/// corners. [heightFactor] fixes its height as a share of the screen; [tall]
+/// is the same at .86. Otherwise it hugs its content.
 Future<R?> showGlassSheet<R>(BuildContext context,
-    {required Widget Function(BuildContext) builder, bool tall = false}) {
+    {required Widget Function(BuildContext) builder,
+    bool tall = false,
+    double? heightFactor}) {
+  final fixed = heightFactor ?? (tall ? .86 : null);
   return showModalBottomSheet<R>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: const Color(0x590E0A10),
+    barrierColor: const Color(0x8C0E0A10),
     builder: (ctx) {
-      final h = MediaQuery.of(ctx).size.height;
+      final mq = MediaQuery.of(ctx);
       return Padding(
-        padding: EdgeInsets.fromLTRB(
-            10, 0, 10, 10 + MediaQuery.of(ctx).viewInsets.bottom),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: h * .88),
-          child: SizedBox(
-            height: tall ? h * .86 : null,
-            child: Glass(
-              radius: 36,
-              strong: true,
-              blur: 34,
-              padding: const EdgeInsets.fromLTRB(22, 10, 22, 22),
-              child: Column(
-                mainAxisSize: tall ? MainAxisSize.max : MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 5,
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
-                        color: C.sand.withValues(alpha: .35),
-                        borderRadius: BorderRadius.circular(3)),
-                  ),
-                  if (tall)
-                    Expanded(child: builder(ctx))
-                  else
-                    Flexible(child: SingleChildScrollView(child: builder(ctx))),
-                ],
-              ),
-            ),
-          ),
+        padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+        child: SheetSurface(
+          height: fixed == null ? null : mq.size.height * fixed,
+          maxHeight: mq.size.height * .88,
+          bottomInset: mq.viewInsets.bottom > 0 ? 0 : mq.viewPadding.bottom,
+          child: fixed != null
+              ? builder(ctx)
+              : Flexible(child: SingleChildScrollView(child: builder(ctx))),
         ),
       );
     },
   );
+}
+
+/// The orange glass itself: blur, translucent amber, bright top rim, handle.
+class SheetSurface extends StatelessWidget {
+  const SheetSurface(
+      {super.key,
+      required this.child,
+      this.height,
+      required this.maxHeight,
+      this.bottomInset = 0});
+  final Widget child;
+  final double? height;
+  final double maxHeight;
+  final double bottomInset;
+
+  static const _radius = BorderRadius.vertical(top: Radius.circular(32));
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: _radius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+        child: Container(
+          height: height,
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          padding: EdgeInsets.fromLTRB(22, 10, 22, bottomInset + 14),
+          decoration: BoxDecoration(
+            borderRadius: _radius,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                C.amberLight.withValues(alpha: .72),
+                C.amberDeep.withValues(alpha: .62),
+              ],
+            ),
+            border: Border(top: BorderSide(color: S.line(.55))),
+          ),
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(color: S.text),
+            child: Column(
+              mainAxisSize: height == null ? MainAxisSize.min : MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                        color: S.line(.55),
+                        borderRadius: BorderRadius.circular(3)),
+                  ),
+                ),
+                if (height != null) Expanded(child: child) else child,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Title + optional subtitle used at the top of sheets.
@@ -236,10 +292,10 @@ class SheetTitle extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: T.ui(22, w: FontWeight.w700, ls: -.02)),
+            Text(title, style: T.ui(22, w: FontWeight.w700, c: S.text, ls: -.02)),
             if (sub != null) ...[
               const SizedBox(height: 4),
-              Text(sub!, style: T.ui(14, c: C.muted, w: FontWeight.w500)),
+              Text(sub!, style: T.ui(14, c: S.muted, w: FontWeight.w500)),
             ],
           ],
         ),
@@ -272,22 +328,17 @@ class OptionRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: selected
-              ? C.amber.withValues(alpha: .16)
-              : C.sand.withValues(alpha: .05),
-          border: Border.all(
-              color: selected
-                  ? C.amber.withValues(alpha: .45)
-                  : C.sand.withValues(alpha: .08)),
+          color: selected ? S.fill(.32) : S.fill(.12),
+          border: Border.all(color: selected ? Colors.white : S.line(.22)),
         ),
         child: Row(children: [
-          Icon(icon, size: 20, color: selected ? C.amber : C.sand2),
+          Icon(icon, size: 20, color: selected ? S.accent : S.text),
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: T.ui(15.5, w: FontWeight.w700)),
+              Text(title, style: T.ui(15.5, w: FontWeight.w700, c: S.text)),
               if (sub != null)
-                Text(sub!, style: T.ui(12.5, c: C.faint, w: FontWeight.w500)),
+                Text(sub!, style: T.ui(12.5, c: S.muted, w: FontWeight.w500)),
             ]),
           ),
           AnimatedContainer(
@@ -297,7 +348,7 @@ class OptionRow extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                  color: selected ? C.amber : C.sand.withValues(alpha: .3),
+                  color: selected ? S.accent : S.line(.6),
                   width: selected ? 6 : 2),
             ),
           ),

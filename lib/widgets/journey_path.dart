@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -22,6 +24,18 @@ NodeState stateOf(int i) {
   return i < d ? NodeState.done : (i == d ? NodeState.now : NodeState.lock);
 }
 
+/// When a prayer step opens: its prayer time today. Other steps are always open.
+DateTime? stepOpensAt(int i) {
+  final p = journeySteps[i].prayer;
+  return p == null ? null : AppState.instance.today[p];
+}
+
+/// Prayer steps can't be tapped until their prayer time has arrived.
+bool stepArrived(int i) {
+  final at = stepOpensAt(i);
+  return at == null || !DateTime.now().isBefore(at);
+}
+
 String stepTime(JourneyStep s) {
   if (s.prayer == null) return s.time;
   return hmA(AppState.instance.today[s.prayer!]);
@@ -40,6 +54,7 @@ class JourneyNode extends StatefulWidget {
 class _JourneyNodeState extends State<JourneyNode>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
+  Timer? _arrival;
 
   @override
   void initState() {
@@ -47,10 +62,30 @@ class _JourneyNodeState extends State<JourneyNode>
     _pulse = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1800))
       ..repeat(reverse: true);
+    _scheduleArrival();
+  }
+
+  @override
+  void didUpdateWidget(JourneyNode old) {
+    super.didUpdateWidget(old);
+    if (old.index != widget.index) _scheduleArrival();
+  }
+
+  /// Rebuild the moment the prayer time arrives so the node becomes tappable.
+  void _scheduleArrival() {
+    _arrival?.cancel();
+    final at = stepOpensAt(widget.index);
+    if (at == null) return;
+    final wait = at.difference(DateTime.now());
+    if (wait.isNegative) return;
+    _arrival = Timer(wait + const Duration(milliseconds: 50), () {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _arrival?.cancel();
     _pulse.dispose();
     super.dispose();
   }
@@ -58,6 +93,7 @@ class _JourneyNodeState extends State<JourneyNode>
   @override
   Widget build(BuildContext context) {
     final st = stateOf(widget.index);
+    final arrived = stepArrived(widget.index);
     final s = st == NodeState.now ? widget.size + 10 : widget.size;
     final icon = st == NodeState.done ? LucideIcons.check : stepIcon(widget.index);
     Widget node;
@@ -89,18 +125,22 @@ class _JourneyNodeState extends State<JourneyNode>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: const Color(0xFF2A2230),
-              border: Border.all(color: C.amber, width: 2),
+              // Waiting for its prayer time: dim ring, no pulse.
+              border: Border.all(
+                  color: arrived ? C.amber : C.amber.withValues(alpha: .35), width: 2),
               boxShadow: [
                 const BoxShadow(color: Color(0x99A8683A), offset: Offset(0, 6)),
-                BoxShadow(
-                    color: C.amber.withValues(alpha: .15 + .2 * _pulse.value),
-                    blurRadius: 18 + 14 * _pulse.value,
-                    spreadRadius: 4 * _pulse.value),
+                if (arrived)
+                  BoxShadow(
+                      color: C.amber.withValues(alpha: .15 + .2 * _pulse.value),
+                      blurRadius: 18 + 14 * _pulse.value,
+                      spreadRadius: 4 * _pulse.value),
               ],
             ),
             child: child,
           ),
-          child: Icon(icon, size: s * .42, color: C.amber),
+          child: Icon(icon,
+              size: s * .42, color: arrived ? C.amber : C.amber.withValues(alpha: .45)),
         );
       case NodeState.lock:
         node = Container(
@@ -114,7 +154,11 @@ class _JourneyNodeState extends State<JourneyNode>
           child: Icon(icon, size: s * .42, color: C.sand.withValues(alpha: .35)),
         );
     }
-    return GestureDetector(onTap: widget.onTap, child: node);
+    return Semantics(
+      button: true,
+      enabled: arrived,
+      child: GestureDetector(onTap: arrived ? widget.onTap : null, child: node),
+    );
   }
 }
 
@@ -254,14 +298,11 @@ Future<void> openStepSheet(BuildContext context, int i) {
         margin: const EdgeInsets.only(bottom: 12, top: 4),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: st == NodeState.done ? C.amberGradient : null,
-          color: st == NodeState.done ? null : C.amber.withValues(alpha: .1),
+          color: st == NodeState.done ? Colors.white : S.fill(.16),
           border: st == NodeState.done
               ? null
               : Border.all(
-                  color: st == NodeState.lock
-                      ? C.sand.withValues(alpha: .2)
-                      : C.amber,
+                  color: st == NodeState.lock ? S.line(.4) : Colors.white,
                   width: 2),
         ),
         child: Icon(stepIcon(i),
@@ -269,34 +310,34 @@ Future<void> openStepSheet(BuildContext context, int i) {
             color: st == NodeState.done
                 ? C.ink
                 : st == NodeState.lock
-                    ? C.faint
-                    : C.amber),
+                    ? S.faint
+                    : S.text),
       ),
-      Text(s.title, style: T.ui(22, w: FontWeight.w700)),
+      Text(s.title, style: T.ui(22, w: FontWeight.w700, c: S.text)),
       const SizedBox(height: 6),
       Text(s.detail,
           textAlign: TextAlign.center,
-          style: T.ui(14, c: C.muted, w: FontWeight.w500, h: 1.5)),
+          style: T.ui(14, c: S.muted, w: FontWeight.w500, h: 1.5)),
       const SizedBox(height: 16),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-            color: C.amber.withValues(alpha: .12),
+            color: S.fill(.22),
             borderRadius: BorderRadius.circular(13)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(LucideIcons.sparkles, size: 15, color: C.amber),
+          const Icon(LucideIcons.sparkles, size: 15, color: S.accent),
           const SizedBox(width: 6),
-          Text('+${s.reward} Noor', style: T.ui(14, c: C.amber, w: FontWeight.w700)),
+          Text('+${s.reward} Noor', style: T.ui(14, c: S.accent, w: FontWeight.w800)),
         ]),
       ),
       const SizedBox(height: 18),
-      AmberButton(
+      SheetButton(
         label: switch (st) {
           NodeState.done => 'Done today ✓',
           NodeState.lock => 'Unlocks at ${stepTime(s)}',
           NodeState.now => 'Mark as done',
         },
-        enabled: st == NodeState.now,
+        enabled: st == NodeState.now && stepArrived(i),
         onTap: () async {
           Navigator.pop(ctx);
           if (s.prayer != null && !app.isPrayed(DateTime.now(), s.prayer!)) {

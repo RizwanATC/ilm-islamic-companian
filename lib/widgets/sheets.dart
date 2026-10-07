@@ -1,12 +1,15 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../data/quran_data.dart';
+import '../services/prayer_alerts.dart';
 import '../services/prayer_service.dart';
 import '../services/zone_service.dart';
 import '../state/app_state.dart';
+import '../screens/reader_screen.dart';
 import '../theme.dart';
 
 // ------------------------------------------------------------------ qibla
@@ -14,42 +17,83 @@ import '../theme.dart';
 void showQiblaSheet(BuildContext context) {
   final app = AppState.instance;
   final b = app.qiblaBearing;
+  final events = FlutterCompass.events;
   showGlassSheet(context, builder: (ctx) {
-    return Column(children: [
-      SheetTitle('Qibla',
-          sub: '${b.toStringAsFixed(0)}° from true north · ${app.placeName}'),
-      const SizedBox(height: 20),
-      SizedBox(
-        width: 230,
-        height: 230,
-        child: CustomPaint(painter: _QiblaPainter(b)),
-      ),
-      const SizedBox(height: 14),
-      Text(
-          'Face north, then turn until you face the gold arrow. '
-          'A live compass needs the phone\'s magnetometer, which comes next.',
-          textAlign: TextAlign.center,
-          style: T.ui(13.5, c: C.muted, w: FontWeight.w500, h: 1.45)),
-      const SizedBox(height: 18),
-      AmberButton(label: 'Got it', onTap: () => Navigator.pop(ctx)),
-    ]);
+    return StreamBuilder<CompassEvent>(
+      stream: events,
+      builder: (ctx, snap) {
+        final heading = snap.data?.heading;
+        final live = heading != null;
+        // How far the phone is from facing the Qibla, -180..180.
+        final off = live ? ((b - heading + 540) % 360) - 180 : 0.0;
+        final aligned = live && off.abs() <= 5;
+        return Column(children: [
+          SheetTitle('Qibla',
+              sub: '${b.toStringAsFixed(0)}° from true north · ${app.placeName}'),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: 230,
+            height: 230,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: heading ?? 0),
+              duration: const Duration(milliseconds: 250),
+              builder: (_, h, _) => CustomPaint(
+                  painter: _QiblaPainter(b, heading: live ? h : 0, aligned: aligned)),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+              !live
+                  ? (events == null
+                      ? 'This phone has no compass. Face north, then turn until '
+                          'you face the gold arrow.'
+                      : 'Finding north…')
+                  : aligned
+                      ? 'You are facing the Qibla.'
+                      : 'Turn ${off > 0 ? 'right' : 'left'} ${off.abs().round()}° '
+                          'until the arrow points straight up.',
+              textAlign: TextAlign.center,
+              style: T.ui(aligned ? 15 : 13.5,
+                  c: aligned ? S.accent : S.muted,
+                  w: aligned ? FontWeight.w800 : FontWeight.w500,
+                  h: 1.45)),
+          if (live) ...[
+            const SizedBox(height: 6),
+            Text('Keep the phone flat and away from metal.',
+                textAlign: TextAlign.center,
+                style: T.ui(12, c: S.muted, w: FontWeight.w500)),
+          ],
+          const SizedBox(height: 18),
+          SheetButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
+        ]);
+      },
+    );
   });
 }
 
 class _QiblaPainter extends CustomPainter {
-  _QiblaPainter(this.bearing);
+  _QiblaPainter(this.bearing, {this.heading = 0, this.aligned = false});
   final double bearing;
+
+  /// Which way the phone points (0 = north); the dial turns against it.
+  final double heading;
+  final bool aligned;
   @override
   void paint(Canvas canvas, Size size) {
     final c = size.center(Offset.zero);
     final r = size.width / 2 - 8;
+    // Rotate the whole dial so north on screen matches real north.
+    canvas.save();
+    canvas.translate(c.dx, c.dy);
+    canvas.rotate(-heading * math.pi / 180);
+    canvas.translate(-c.dx, -c.dy);
     canvas.drawCircle(
         c,
         r,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
-          ..color = C.sand.withValues(alpha: .15));
+          ..color = S.line(.45));
     for (var i = 0; i < 72; i++) {
       final a = i * math.pi / 36;
       final len = i % 18 == 0 ? 10.0 : 4.0;
@@ -60,7 +104,7 @@ class _QiblaPainter extends CustomPainter {
           p2,
           Paint()
             ..strokeWidth = 1.2
-            ..color = C.sand.withValues(alpha: i % 18 == 0 ? .5 : .15));
+            ..color = Colors.white.withValues(alpha: i % 18 == 0 ? .9 : .4));
     }
     const labels = ['N', 'E', 'S', 'W'];
     for (var i = 0; i < 4; i++) {
@@ -68,7 +112,7 @@ class _QiblaPainter extends CustomPainter {
       final tp = TextPainter(
         text: TextSpan(
             text: labels[i],
-            style: T.ui(13, w: FontWeight.w700, c: i == 0 ? C.sand : C.faint)),
+            style: T.ui(13, w: FontWeight.w700, c: i == 0 ? S.accent : S.text)),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas,
@@ -82,13 +126,13 @@ class _QiblaPainter extends CustomPainter {
       ..lineTo(12, 0)
       ..lineTo(-12, 0)
       ..close();
-    canvas.drawPath(arrow, Paint()..color = C.amber);
+    canvas.drawPath(arrow, Paint()..color = aligned ? S.accent : C.ink);
     final tail = Path()
       ..moveTo(0, r - 40)
       ..lineTo(12, 0)
       ..lineTo(-12, 0)
       ..close();
-    canvas.drawPath(tail, Paint()..color = C.sand.withValues(alpha: .18));
+    canvas.drawPath(tail, Paint()..color = S.line(.4));
     final kaaba = RRect.fromRectAndRadius(
         Rect.fromCenter(center: Offset(0, -r + 26), width: 18, height: 18),
         const Radius.circular(3));
@@ -98,13 +142,23 @@ class _QiblaPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5
-          ..color = C.amber);
+          ..color = Colors.white);
     canvas.restore();
-    canvas.drawCircle(c, 7, Paint()..color = C.sand);
+    canvas.restore();
+    // Fixed marker at the top: line the arrow up with it.
+    final mark = Path()
+      ..moveTo(c.dx, 0)
+      ..lineTo(c.dx + 7, -10)
+      ..lineTo(c.dx - 7, -10)
+      ..close();
+    canvas.drawPath(
+        mark, Paint()..color = aligned ? S.accent : Colors.white.withValues(alpha: .7));
+    canvas.drawCircle(c, 7, Paint()..color = Colors.white);
   }
 
   @override
-  bool shouldRepaint(_QiblaPainter old) => old.bearing != bearing;
+  bool shouldRepaint(_QiblaPainter old) =>
+      old.bearing != bearing || old.heading != heading || old.aligned != aligned;
 }
 
 // ------------------------------------------------------------------ method
@@ -127,9 +181,9 @@ void showMethodSheet(BuildContext context) {
           Text(
               'In Malaysia, Ilm uses the official JAKIM timetable for your zone. '
               'Other methods are used when you travel outside Malaysia.',
-              style: T.ui(13.5, c: C.muted, w: FontWeight.w500, h: 1.45)),
+              style: T.ui(13.5, c: S.muted, w: FontWeight.w500, h: 1.45)),
           const SizedBox(height: 18),
-          AmberButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
+          SheetButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
         ]);
       }
       return Column(children: [
@@ -147,7 +201,7 @@ void showMethodSheet(BuildContext context) {
             },
           ),
         const SizedBox(height: 10),
-        AmberButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
+        SheetButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
       ]);
     });
   });
@@ -177,8 +231,20 @@ void showAdhanSheet(BuildContext context) {
               set(() {});
             },
           ),
-        const SizedBox(height: 10),
-        AmberButton(label: 'Save', onTap: () => Navigator.pop(ctx)),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            PrayerAlerts.instance.test();
+            ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(
+                content: Text('A test alert will arrive in 5 seconds.')));
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Text('Send a test alert',
+                style: T.ui(14, w: FontWeight.w700, c: C.amber)),
+          ),
+        ),
+        SheetButton(label: 'Save', onTap: () => Navigator.pop(ctx)),
       ]);
     });
   });
@@ -186,9 +252,9 @@ void showAdhanSheet(BuildContext context) {
 
 // ------------------------------------------------------------------ reciter
 
-void showReciterSheet(BuildContext context) {
+Future<void> showReciterSheet(BuildContext context) {
   final app = AppState.instance;
-  showGlassSheet(context, builder: (ctx) {
+  return showGlassSheet(context, builder: (ctx) {
     return StatefulBuilder(builder: (ctx, set) {
       return Column(children: [
         const SheetTitle('Reciter', sub: 'Voice for Quran audio'),
@@ -205,7 +271,7 @@ void showReciterSheet(BuildContext context) {
             },
           ),
         const SizedBox(height: 10),
-        AmberButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
+        SheetButton(label: 'Done', onTap: () => Navigator.pop(ctx)),
       ]);
     });
   });
@@ -231,9 +297,9 @@ void showZoneSheet(BuildContext context) {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Row(children: [
-            const Icon(LucideIcons.locateFixed, size: 20, color: C.amber),
+            const Icon(LucideIcons.locateFixed, size: 20, color: S.accent),
             const SizedBox(width: 12),
-            Text('Use my location', style: T.ui(15, c: C.amber, w: FontWeight.w700)),
+            Text('Use my location', style: T.ui(15, c: S.accent, w: FontWeight.w800)),
           ]),
         ),
       ),
@@ -249,7 +315,7 @@ void showZoneSheet(BuildContext context) {
                 Padding(
                   padding: const EdgeInsets.only(top: 18, bottom: 4),
                   child: Text((stateNames[z.state] ?? z.state).toUpperCase(),
-                      style: T.ui(12, c: C.amber, w: FontWeight.w700, ls: .06)),
+                      style: T.ui(12, c: S.accent, w: FontWeight.w800, ls: .06)),
                 ),
               GestureDetector(
                 onTap: () async {
@@ -259,17 +325,17 @@ void showZoneSheet(BuildContext context) {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: C.line()))),
+                      border: Border(bottom: BorderSide(color: S.line(.22)))),
                   child: Row(children: [
                     SizedBox(
                         width: 62,
                         child: Text(z.code,
                             style: T.ui(13.5,
-                                w: FontWeight.w700, c: sel ? C.amber : C.sand2))),
+                                w: FontWeight.w700, c: sel ? S.accent : S.text))),
                     Expanded(
                         child: Text(z.label,
-                            style: T.ui(13.5, c: sel ? C.amber : C.muted, h: 1.35))),
-                    if (sel) const Icon(LucideIcons.check, size: 18, color: C.amber),
+                            style: T.ui(13.5, c: sel ? S.accent : S.muted, w: sel ? FontWeight.w700 : FontWeight.w500, h: 1.35))),
+                    if (sel) const Icon(LucideIcons.check, size: 18, color: S.accent),
                   ]),
                 ),
               ),
@@ -294,7 +360,7 @@ void showSurahSheet(BuildContext context, Surah s, {VoidCallback? onListen}) {
             child: SheetTitle(s.name,
                 sub: '${s.meaning} · ${s.ayahs} ayahs · ${s.meccan ? 'Meccan' : 'Medinan'}'),
           ),
-          Text(s.arabic, style: T.arabic(28, c: C.amber, h: 1.4)),
+          Text(s.arabic, style: T.arabic(28, c: S.text, h: 1.4)),
         ]),
         const SizedBox(height: 18),
         OptionRow(
@@ -302,10 +368,11 @@ void showSurahSheet(BuildContext context, Surah s, {VoidCallback? onListen}) {
           title: app.lastSurah == s.number ? 'Continue reading' : 'Start reading here',
           sub: app.lastSurah == s.number
               ? 'You stopped at ayah ${app.lastAyah}'
-              : 'Sets this as your reading spot',
-          onTap: () async {
-            await app.setLastRead(s.number, app.lastSurah == s.number ? app.lastAyah : 1);
-            if (ctx.mounted) Navigator.pop(ctx);
+              : 'Arabic with translation',
+          onTap: () {
+            Navigator.pop(ctx);
+            openReader(context, s,
+                ayah: app.lastSurah == s.number ? app.lastAyah : 1);
           },
         ),
         OptionRow(
@@ -314,7 +381,8 @@ void showSurahSheet(BuildContext context, Surah s, {VoidCallback? onListen}) {
           sub: reciters[app.reciter].$1,
           onTap: () {
             Navigator.pop(ctx);
-            showReciterSheet(context);
+            openReader(context, s,
+                ayah: app.lastSurah == s.number ? app.lastAyah : 1, listen: true);
           },
         ),
         OptionRow(
