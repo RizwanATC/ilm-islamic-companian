@@ -70,6 +70,27 @@ class PrayerAlerts {
         false;
   }
 
+  /// Whether Android lets alerts fire on the minute. From Android 14 the
+  /// user has to allow "Alarms & reminders" for the app; without it alerts
+  /// can arrive a few minutes late.
+  Future<bool> canAlertOnTime() async {
+    if (!Platform.isAndroid) return true;
+    return await _android?.canScheduleExactNotifications() ?? true;
+  }
+
+  /// Opens the system "Alarms & reminders" setting, then rebuilds the
+  /// schedule so the change takes effect.
+  Future<bool> askForOnTimeAlerts() async {
+    await _android?.requestExactAlarmsPermission();
+    final ok = await canAlertOnTime();
+    if (ok) reschedule();
+    return ok;
+  }
+
+  AndroidFlutterLocalNotificationsPlugin? get _android =>
+      _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
   /// Reschedules shortly after the last call, so several settings changes in
   /// a row only rebuild the schedule once.
   void reschedule() {

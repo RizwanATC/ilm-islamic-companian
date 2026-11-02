@@ -1,6 +1,8 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Ilm colour palette: "Quiet ink" background with warm amber accents.
@@ -66,6 +68,18 @@ class T {
   static TextStyle calligraphy(double size, {Color c = C.sage}) =>
       GoogleFonts.arefRuqaa(
           fontSize: size, color: c, fontWeight: FontWeight.w700, height: 1.3);
+}
+
+/// Uses the fonts in assets/google_fonts instead of downloading them, and
+/// lists their licences on the app's licence page.
+void useBundledFonts() {
+  GoogleFonts.config.allowRuntimeFetching = false;
+  LicenseRegistry.addLicense(() async* {
+    for (final f in ['urbanist', 'scheherazadenew', 'arefruqaa']) {
+      final text = await rootBundle.loadString('assets/google_fonts/OFL-$f.txt');
+      yield LicenseEntryWithLineBreaks(['google_fonts'], text);
+    }
+  });
 }
 
 ThemeData buildTheme() {

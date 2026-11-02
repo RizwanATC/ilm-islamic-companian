@@ -244,6 +244,26 @@ void showAdhanSheet(BuildContext context) {
                 style: T.ui(14, w: FontWeight.w700, c: C.amber)),
           ),
         ),
+        FutureBuilder<bool>(
+          future: PrayerAlerts.instance.canAlertOnTime(),
+          builder: (_, snap) => snap.data != false
+              ? const SizedBox.shrink()
+              : GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () async {
+                    await PrayerAlerts.instance.askForOnTimeAlerts();
+                    set(() {});
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Text(
+                        'Alerts may arrive a few minutes late. '
+                        'Tap to allow on-time alerts.',
+                        textAlign: TextAlign.center,
+                        style: T.ui(13, c: S.muted)),
+                  ),
+                ),
+        ),
         SheetButton(label: 'Save', onTap: () => Navigator.pop(ctx)),
       ]);
     });

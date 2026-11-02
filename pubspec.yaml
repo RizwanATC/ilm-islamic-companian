@@ -75,6 +75,8 @@ flutter:
     - assets/data/
     - assets/img/
     - assets/sounds/
+    # Fonts ship with the app so text looks right offline (see theme.dart).
+    - assets/google_fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

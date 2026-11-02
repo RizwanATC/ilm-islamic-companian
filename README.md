@@ -27,6 +27,39 @@ Or from a terminal: `flutter run`.
 - `server/yun-worker/`: the Cloudflare Worker behind the Yun/Ayu chat
 - `test/widget_test.dart`: checks the zone lookup against real Malaysian locations
 
+## Releasing on Google Play
+
+1. **Create an upload key** (once, and back it up somewhere safe; losing it means you
+   can't update the app without contacting Google):
+   ```sh
+   keytool -genkey -v -keystore ~/ilm-upload.jks -keyalg RSA -keysize 2048 \
+     -validity 10000 -alias upload
+   ```
+2. **Create `android/key.properties`** (it's git-ignored, never commit it):
+   ```properties
+   storePassword=...
+   keyPassword=...
+   keyAlias=upload
+   storeFile=/Users/you/ilm-upload.jks
+   ```
+3. **Raise the version** in `pubspec.yaml` for every upload (`1.0.0+1` → `1.0.1+2`; the
+   number after `+` must always go up).
+4. **Build the bundle:**
+   ```sh
+   flutter build appbundle --release \
+     --dart-define=YUN_API_URL=https://ilm-yun.<you>.workers.dev \
+     --dart-define=YUN_APP_KEY=<APP_KEY>
+   ```
+   Upload `build/app/outputs/bundle/release/app-release.aab` in Play Console.
+5. **Play Console checklist:** privacy policy URL (`docs/privacy-policy.md` is a ready text;
+   host it anywhere public), Data safety form (approximate and precise location used on
+   device only; chat messages sent to a server and not stored), content rating, app
+   category (Lifestyle), screenshots and descriptions. New personal accounts must run a
+   closed test with at least 12 testers for 14 days before production.
+6. **Exact alarms:** the app declares `SCHEDULE_EXACT_ALARM` so adhan alerts fire on the
+   minute. On Android 14+ users allow it from the Adhan sound sheet; Play doesn't require a
+   declaration for this permission.
+
 ## Features that use the network
 
 - **Quran reader:** text from api.alquran.cloud (Uthmani script, Sahih International and

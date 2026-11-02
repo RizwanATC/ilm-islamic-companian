@@ -18,6 +18,7 @@ import 'widgets/common.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  useBundledFonts();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
