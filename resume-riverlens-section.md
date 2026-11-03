@@ -11,8 +11,12 @@
 - Reviewed API contracts with backend (TypeScript) and QA, and verified releases on real devices against staging.
 
 **Alafasy — Main App (Native Android)**
-*Kotlin, MVVM, Coroutines/Flow, Retrofit, Room, Hilt*
+*Kotlin, MVVM, Jetpack, Coroutines/Flow/LiveData, Retrofit, Room, Hilt*
 
-- Developed the app from scratch in Kotlin, from UI/UX to production release, using MVVM, Jetpack and Hilt for a modular, testable architecture.
-- Integrated REST APIs (Retrofit) and Room for offline support; used Coroutines/Flow for reactive data.
-- Optimised battery, memory, background processing and network usage.
+- Developed Android applications from scratch using Kotlin, including the Alafasy app, covering full SDLC from UI/UX implementation to production deployment.
+- Implemented MVVM architecture using Jetpack components, ensuring clean separation of concerns and highly maintainable, scalable application structure.
+- Utilized Coroutines and Kotlin Flow/LiveData for efficient asynchronous programming and reactive data handling across UI and data layers.
+- Integrated RESTful APIs using Retrofit, handling JSON parsing, error handling, authentication flows, and secure network communication.
+- Implemented Room database for local data persistence, enabling offline support and optimized data caching strategies.
+- Applied Hilt (Dependency Injection) to improve modularity, testability, and scalability of the application architecture.
+- Optimized application performance with focus on battery efficiency, memory management, background processing, and reduced network overhead.
