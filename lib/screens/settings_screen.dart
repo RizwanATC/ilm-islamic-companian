@@ -81,6 +81,24 @@ class SettingsScreen extends StatelessWidget {
         _row(LucideIcons.code, C.plum, 'Built by Rizwan Mat Nawi',
             value: 'Android developer'),
         _row(LucideIcons.mapPin, C.plum, 'Based in', value: 'Selangor, Malaysia'),
+        const _AboutProject(
+          name: 'Ommri Care',
+          role: 'Mobile developer (iOS & Android) · Riverlens',
+          blurb: 'Native patient apps for a multi-branch Malaysian clinic group: '
+              'book visits, manage prescriptions and records, join video consults '
+              'and pay bills, in English and Bahasa Melayu. Includes biometric '
+              'sign-in (Secure Enclave / Android Keystore), MyKad eKYC, Stripe '
+              'payments and push notifications.',
+          tech: 'Swift, SwiftUI, Kotlin, Jetpack Compose, Hilt, Retrofit, Firebase, Stripe',
+        ),
+        const _AboutProject(
+          name: 'Alafasy',
+          role: 'Native Android developer · Riverlens',
+          blurb: 'Android app built from scratch in Kotlin, from UI to production '
+              'release, using MVVM, Coroutines and Flow, Retrofit, Room for offline '
+              'support, and Hilt for dependency injection.',
+          tech: 'Kotlin, MVVM, Coroutines/Flow, Retrofit, Room, Hilt',
+        ),
         const SizedBox(height: 30),
         Text('Ilm 1.0 · Prayer times from JAKIM e-Solat in Malaysia',
             textAlign: TextAlign.center, style: T.ui(12, c: C.faint)),
@@ -125,6 +143,30 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AboutProject extends StatelessWidget {
+  const _AboutProject(
+      {required this.name,
+      required this.role,
+      required this.blurb,
+      required this.tech});
+  final String name, role, blurb, tech;
+  @override
+  Widget build(BuildContext context) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: C.line()))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(name, style: T.ui(15.5, w: FontWeight.w700)),
+          const SizedBox(height: 2),
+          Text(role, style: T.ui(13, c: C.muted, w: FontWeight.w500)),
+          const SizedBox(height: 8),
+          Text(blurb, style: T.ui(13.5, c: C.muted)),
+          const SizedBox(height: 8),
+          Text(tech, style: T.ui(12, c: C.faint, w: FontWeight.w500)),
+        ]),
+      );
 }
 
 class _Toggle extends StatelessWidget {
