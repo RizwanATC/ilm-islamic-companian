@@ -241,7 +241,9 @@ void showAdhanSheet(BuildContext context) {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: Text('Send a test alert',
-                style: T.ui(14, w: FontWeight.w700, c: C.amber)),
+                style: T.ui(14, w: FontWeight.w800, c: S.text).copyWith(
+                    decoration: TextDecoration.underline,
+                    decorationColor: S.text)),
           ),
         ),
         FutureBuilder<bool>(

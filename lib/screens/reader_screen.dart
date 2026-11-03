@@ -138,15 +138,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
     );
   }
 
+  // Solid so the ayahs scrolling underneath don't show through the title.
   Widget _topBar(double top) => Container(
         padding: EdgeInsets.fromLTRB(8, top + 4, 12, 8),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [C.bg, C.bg.withValues(alpha: .92), C.bg.withValues(alpha: 0)],
-            stops: const [0, .7, 1],
-          ),
+          color: C.bg,
+          border: Border(
+              bottom: BorderSide(color: C.sand.withValues(alpha: .08))),
         ),
         child: Row(children: [
           IconButton(

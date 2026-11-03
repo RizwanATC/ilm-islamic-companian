@@ -21,7 +21,7 @@ extension AdhanSoundX on AdhanSound {
         AdhanSound.silent => 'Silent',
       };
   String get sub => switch (this) {
-        AdhanSound.makkah => 'Full call to prayer (opening on iPhone)',
+        AdhanSound.makkah => 'Full call to prayer',
         AdhanSound.madinah => 'Opening “Allahu akbar” only',
         AdhanSound.chime => 'A short tone',
         AdhanSound.silent => 'Notification only',
