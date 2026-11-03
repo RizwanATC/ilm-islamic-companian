@@ -33,6 +33,7 @@ const reciters = [
   ('Saad Al-Ghamdi', 'Murattal · Saudi Arabia'),
   ('Maher Al-Muaiqly', 'Murattal · Makkah'),
   ('Abdul Basit Abdus Samad', 'Mujawwad · Egypt'),
+  ('Mishary Alafasy', 'Murattal · Kuwait'),
 ];
 
 class JourneyStep {
