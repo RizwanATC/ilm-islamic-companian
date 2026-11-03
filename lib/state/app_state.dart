@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/prayer_alerts.dart';
 import '../services/prayer_service.dart';
 import '../services/zone_service.dart';
 
@@ -14,14 +15,14 @@ enum AdhanSound { makkah, madinah, chime, silent }
 
 extension AdhanSoundX on AdhanSound {
   String get label => switch (this) {
-        AdhanSound.makkah => 'Makkah',
-        AdhanSound.madinah => 'Madinah',
+        AdhanSound.makkah => 'Adhan',
+        AdhanSound.madinah => 'Takbir',
         AdhanSound.chime => 'Gentle chime',
         AdhanSound.silent => 'Silent',
       };
   String get sub => switch (this) {
         AdhanSound.makkah => 'Full call to prayer',
-        AdhanSound.madinah => 'Soft, slower call to prayer',
+        AdhanSound.madinah => 'Opening “Allahu akbar” only',
         AdhanSound.chime => 'A short tone',
         AdhanSound.silent => 'Notification only',
       };
@@ -78,8 +79,14 @@ class AppState extends ChangeNotifier {
 
   // ---------- profile ----------
   Gender gender = Gender.female;
-  String get userName => gender == Gender.female ? 'Aisha' : 'Adam';
-  String get userFull => '$userName Rahman';
+
+  /// What the user asked to be called; stays on the phone only.
+  String name = '';
+  String get userName => name.isEmpty ? 'Friend' : name;
+  String get userFull => userName;
+
+  /// Whether the first-launch welcome card has been shown.
+  bool askedName = false;
   String get botName => gender == Gender.female ? 'Ayu' : 'Yun';
 
   // ---------- location & prayer times ----------
@@ -132,6 +139,8 @@ class AppState extends ChangeNotifier {
 
   void _load() {
     gender = Gender.values[_prefs.getInt('gender') ?? 0];
+    name = _prefs.getString('name') ?? '';
+    askedName = _prefs.getBool('askedName') ?? false;
     autoLocation = _prefs.getBool('autoLocation') ?? true;
     zoneCode = _prefs.getString('zone') ?? zoneCode;
     lat = _prefs.getDouble('lat') ?? lat;
@@ -262,6 +271,7 @@ class AppState extends ChangeNotifier {
     }
     loading = false;
     notifyListeners();
+    PrayerAlerts.instance.reschedule();
   }
 
   /// Prayer times for any date: JAKIM when in Malaysia and available,
@@ -312,17 +322,28 @@ class AppState extends ChangeNotifier {
     method = m;
     await _prefs.setInt('method', m.index);
     notifyListeners();
+    PrayerAlerts.instance.reschedule();
   }
 
   Future<void> setHanafi(bool v) async {
     hanafi = v;
     await _prefs.setBool('hanafi', v);
     notifyListeners();
+    PrayerAlerts.instance.reschedule();
   }
 
   Future<void> setAdhanSound(AdhanSound s) async {
     adhanSound = s;
     await _prefs.setInt('adhanSound', s.index);
+    notifyListeners();
+    PrayerAlerts.instance.reschedule();
+  }
+
+  Future<void> setName(String v) async {
+    name = v.trim();
+    askedName = true;
+    await _prefs.setString('name', name);
+    await _prefs.setBool('askedName', true);
     notifyListeners();
   }
 
@@ -343,6 +364,7 @@ class AppState extends ChangeNotifier {
     await _prefs.setString(
         'alerts', jsonEncode(alerts.map((k, v) => MapEntry(k.name, v))));
     notifyListeners();
+    PrayerAlerts.instance.reschedule();
   }
 
   // ---------------------------------------------------------------- tracking

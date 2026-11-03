@@ -4,16 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../services/prayer_service.dart';
+import '../services/yun_ai.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
 class _Msg {
-  _Msg(this.text, {this.me = false, this.arabic, this.typing = false});
+  _Msg(this.text,
+      {this.me = false, this.arabic, this.typing = false, this.failed = false});
   String text;
   final bool me;
   String? arabic;
   bool typing;
+  bool failed; // an error notice, kept out of the history sent to the AI
 }
 
 void openChat(BuildContext context) {
@@ -80,25 +83,48 @@ class _ChatState extends State<_Chat> {
   }
 
   void _ask(String q) {
-    if (q.trim().isEmpty) return;
+    q = q.trim();
+    if (q.isEmpty || (_msgs.isNotEmpty && _msgs.last.typing)) return;
     setState(() {
       _showSuggestions = false;
-      _msgs.add(_Msg(q.trim(), me: true));
+      _msgs.add(_Msg(q, me: true));
       _msgs.add(_Msg('', typing: true));
     });
     _toBottom();
-    Timer(const Duration(milliseconds: 1300), () {
-      if (!mounted) return;
-      final r = _reply(q);
-      setState(() {
-        final m = _msgs.last;
-        m
-          ..typing = false
-          ..text = r.text
-          ..arabic = r.arabic;
-      });
-      _toBottom();
+    if (YunAi.configured) {
+      _askAi();
+    } else {
+      Timer(const Duration(milliseconds: 1300), () => _answer(_reply(q)));
+    }
+  }
+
+  Future<void> _askAi() async {
+    // Everything after the greeting, minus the typing bubble.
+    final history = [
+      for (final m in _msgs.skip(1))
+        if (!m.typing && !m.failed && m.text.isNotEmpty) (m.me, m.text),
+    ];
+    _Msg r;
+    try {
+      r = _Msg(await YunAi.ask(history));
+    } on YunError catch (e) {
+      r = _Msg(e.message, failed: true);
+    } catch (_) {
+      r = _Msg(YunError('network').message, failed: true);
+    }
+    _answer(r);
+  }
+
+  void _answer(_Msg r) {
+    if (!mounted) return;
+    setState(() {
+      _msgs.last
+        ..typing = false
+        ..text = r.text
+        ..arabic = r.arabic
+        ..failed = r.failed;
     });
+    _toBottom();
   }
 
   void _toBottom() => WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -126,17 +152,17 @@ class _ChatState extends State<_Chat> {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(app.botName, style: T.ui(22, w: FontWeight.w700)),
+            Text(app.botName, style: T.ui(22, w: FontWeight.w700, c: S.text)),
             Row(children: [
               Container(
                   width: 7,
                   height: 7,
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: C.sage,
-                      boxShadow: [BoxShadow(color: C.sage, blurRadius: 6)])),
+                      color: Colors.white,
+                      boxShadow: [BoxShadow(color: Colors.white, blurRadius: 6)])),
               const SizedBox(width: 6),
-              Text('Your Islamic companion', style: T.ui(13.5, c: C.muted)),
+              Text('Your Islamic companion', style: T.ui(13.5, c: S.muted)),
             ]),
           ]),
         ),
@@ -146,9 +172,9 @@ class _ChatState extends State<_Chat> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-                color: C.sand.withValues(alpha: .1),
+                color: S.fill(.22),
                 borderRadius: BorderRadius.circular(12)),
-            child: const Icon(LucideIcons.x, size: 16, color: C.sand),
+            child: const Icon(LucideIcons.x, size: 16, color: S.text),
           ),
         ),
       ]),
@@ -169,10 +195,10 @@ class _ChatState extends State<_Chat> {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
-                        color: C.amber.withValues(alpha: .08),
-                        border: Border.all(color: C.amber.withValues(alpha: .4)),
+                        color: S.fill(.14),
+                        border: Border.all(color: S.line(.6)),
                       ),
-                      child: Text(s, style: T.ui(13.5, c: C.amber)),
+                      child: Text(s, style: T.ui(13.5, c: S.text, w: FontWeight.w700)),
                     ),
                   ),
                 ),
@@ -186,13 +212,14 @@ class _ChatState extends State<_Chat> {
             padding: const EdgeInsets.symmetric(horizontal: 18),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(25),
-              color: C.sand.withValues(alpha: .08),
-              border: Border.all(color: C.sand.withValues(alpha: .16)),
+              color: S.fill(.18),
+              border: Border.all(color: S.line(.35)),
             ),
             alignment: Alignment.centerLeft,
             child: TextField(
               controller: _input,
-              style: T.ui(15, w: FontWeight.w500),
+              style: T.ui(15, c: S.text, w: FontWeight.w600),
+              cursorColor: Colors.white,
               textInputAction: TextInputAction.send,
               onSubmitted: (v) {
                 _ask(v);
@@ -202,7 +229,7 @@ class _ChatState extends State<_Chat> {
                 isCollapsed: true,
                 border: InputBorder.none,
                 hintText: 'Ask ${app.botName} anything…',
-                hintStyle: T.ui(15, c: C.faint, w: FontWeight.w500),
+                hintStyle: T.ui(15, c: S.faint, w: FontWeight.w500),
               ),
             ),
           ),
@@ -216,14 +243,14 @@ class _ChatState extends State<_Chat> {
           child: Container(
             width: 50,
             height: 50,
-            decoration: const BoxDecoration(shape: BoxShape.circle, gradient: C.amberGradient),
+            decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
             child: const Icon(LucideIcons.arrowUp, size: 20, color: C.ink),
           ),
         ),
       ]),
       const SizedBox(height: 10),
       Text('${app.botName} can make mistakes. Check important rulings with a scholar.',
-          textAlign: TextAlign.center, style: T.ui(11.5, c: C.faint)),
+          textAlign: TextAlign.center, style: T.ui(11.5, c: S.faint)),
     ]);
   }
 
@@ -236,9 +263,8 @@ class _ChatState extends State<_Chat> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          gradient: me ? C.amberGradient : null,
-          color: me ? null : C.sand.withValues(alpha: .1),
-          border: me ? null : Border.all(color: C.sand.withValues(alpha: .12)),
+          color: me ? Colors.white : S.fill(.18),
+          border: me ? null : Border.all(color: S.line(.3)),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
@@ -250,10 +276,10 @@ class _ChatState extends State<_Chat> {
             ? const _TypingDots()
             : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 if (m.arabic != null)
-                  Text(m.arabic!, textDirection: TextDirection.rtl, style: T.arabic(20)),
+                  Text(m.arabic!, textDirection: TextDirection.rtl, style: T.arabic(20, c: S.text)),
                 Text(m.text,
                     style: T.ui(14.5,
-                        c: me ? C.ink : C.sand,
+                        c: me ? C.ink : S.text,
                         w: me ? FontWeight.w600 : FontWeight.w500,
                         h: 1.5)),
               ]),
@@ -288,7 +314,7 @@ class _TypingDotsState extends State<_TypingDots> with SingleTickerProviderState
                 width: 7,
                 height: 7,
                 margin: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 3),
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: C.muted),
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
               ),
             ),
         ]),
