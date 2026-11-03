@@ -5,61 +5,80 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Resume Templates</title>
 <style>
-  :root { --bg:#e9e7e2; --ink:#1b1f24; --muted:#5b6470; --line:#d8d6d0; }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  .bar { position:sticky; top:0; z-index:5; display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:10px 16px; background:#1b1f24; color:#fff; }
+  :root { --bg:#eceef3; --ink:#12151c; --muted:#5d6676; }
+  * { box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:13px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .bar { position:sticky; top:0; z-index:5; display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:10px 16px; background:#12151c; color:#fff; }
   .bar b { margin-right:8px; }
-  .bar button { border:0; border-radius:8px; padding:7px 14px; font:inherit; cursor:pointer; background:#39414b; color:#fff; }
-  .bar button.on { background:#f2b34c; color:#1b1f24; font-weight:600; }
-  .bar .print { margin-left:auto; background:#fff; color:#1b1f24; }
+  .bar button { border:0; border-radius:99px; padding:7px 16px; font:inherit; cursor:pointer; background:#2a303b; color:#fff; }
+  .bar button.on { background:#8b7cff; font-weight:600; }
+  .bar .print { margin-left:auto; background:#fff; color:#12151c; }
   .stage { padding:24px 12px 60px; display:flex; justify-content:center; overflow-x:auto; }
-  .page { width:210mm; min-height:297mm; background:#fff; box-shadow:0 6px 30px rgba(0,0,0,.18); flex:none; display:none; }
+  .page { width:210mm; min-height:297mm; background:#fff; box-shadow:0 10px 40px rgba(18,21,28,.2); flex:none; display:none; overflow:hidden; }
   .page.show { display:block; }
   .page h1,.page h2,.page h3,.page p,.page ul { margin:0; }
   .page ul { padding-left:16px; }
-  .page li { margin:2px 0; }
-  .muted { color:var(--muted); }
-  .row { display:flex; justify-content:space-between; gap:12px; }
-  .job { margin-bottom:11px; }
-  .job h3 { font-size:13.5px; }
-  .job .sub { font-size:12.5px; }
-  .proj { font-weight:600; margin:6px 0 2px; font-size:12.5px; }
-  .tech { font-size:11.5px; font-style:italic; color:var(--muted); margin-bottom:2px; }
+  .page li { margin:2.5px 0; }
+  .row { display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
+  .tag { display:inline-block; padding:1px 9px; margin:2px 3px 0 0; border-radius:99px; font-size:11px; }
 
-  /* 1 Classic */
-  #t1 { padding:16mm 16mm; font-family:Georgia,"Times New Roman",serif; font-size:12.5px; }
-  #t1 .head { text-align:center; border-bottom:2px solid #1b1f24; padding-bottom:8px; margin-bottom:10px; }
-  #t1 h1 { font-size:27px; letter-spacing:.06em; text-transform:uppercase; }
-  #t1 .role { font-size:13px; letter-spacing:.12em; text-transform:uppercase; margin-top:2px; }
-  #t1 .contact { font-size:11.5px; margin-top:4px; }
-  #t1 h2 { font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; border-bottom:1px solid var(--line); padding-bottom:2px; margin:12px 0 6px; }
+  /* A: Aurora */
+  #a.show { display:block; }
+  #a .hero { padding:14mm 14mm 11mm; color:#fff; background:linear-gradient(120deg,#4f46e5 0%,#8b5cf6 55%,#ec4899 100%); }
+  #a .hero h1 { font-size:32px; font-weight:800; letter-spacing:-.02em; }
+  #a .hero .role { font-size:15px; opacity:.92; margin-top:2px; }
+  #a .hero .contact { display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:10px; font-size:11.5px; opacity:.9; }
+  #a .body { display:grid; grid-template-columns:1fr 62mm; gap:10mm; padding:9mm 14mm 14mm; }
+  #a h2 { font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#4f46e5; font-weight:700; margin:0 0 8px; }
+  #a .card { background:#f5f5fb; border-radius:14px; padding:12px 14px; margin-bottom:11px; }
+  #a .job { margin-bottom:12px; }
+  #a .job h3 { font-size:14px; }
+  #a .proj { font-weight:700; font-size:12.5px; margin:7px 0 1px; }
+  #a .tech { margin:2px 0 4px; }
+  #a .tag { background:#ece9ff; color:#4338ca; }
+  #a .muted { color:var(--muted); }
+  #a .side h2 { margin-top:2px; }
 
-  /* 2 Sidebar */
-  #t2 { display:none; font-size:12.5px; }
-  #t2.show { display:grid; grid-template-columns:68mm 1fr; }
-  #t2 aside { background:#16324a; color:#e8eef4; padding:16mm 8mm; }
-  #t2 aside h2 { font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#f2b34c; margin:16px 0 6px; }
-  #t2 aside .muted { color:#aebdca; }
-  #t2 aside .avatar { width:22mm; height:22mm; border-radius:50%; background:#f2b34c; color:#16324a; font:700 26px/22mm system-ui; text-align:center; margin-bottom:10px; }
-  #t2 aside h1 { font-size:21px; line-height:1.15; }
-  #t2 aside ul { list-style:none; padding:0; }
-  #t2 aside li { margin:3px 0; }
-  #t2 aside .chip { display:inline-block; border:1px solid #3d6283; border-radius:99px; padding:1px 8px; margin:2px 2px 0 0; font-size:11px; }
-  #t2 main { padding:16mm 12mm 16mm 10mm; }
-  #t2 main h2 { font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:#16324a; margin:0 0 6px; padding-bottom:3px; border-bottom:2px solid #f2b34c; }
-  #t2 main section { margin-bottom:14px; }
+  /* B: Timeline */
+  #b { background:#fbf9f5; padding:15mm 15mm; }
+  #b h1 { font-size:40px; font-weight:800; letter-spacing:-.03em; line-height:1; }
+  #b h1 span { color:#059669; }
+  #b .role { font-size:15px; color:#059669; font-weight:600; margin-top:6px; }
+  #b .contact { margin-top:8px; font-size:11.5px; color:var(--muted); }
+  #b .contact a, #b .contact span { margin-right:12px; }
+  #b .lead { margin:12px 0 4px; font-size:13.5px; max-width:150mm; }
+  #b h2 { font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#059669; margin:16px 0 10px; font-weight:700; }
+  #b .tl { position:relative; margin-left:6px; padding-left:20px; border-left:2px solid #d7e9e1; }
+  #b .job { position:relative; margin-bottom:14px; }
+  #b .job::before { content:""; position:absolute; left:-27px; top:4px; width:12px; height:12px; border-radius:50%; background:#fbf9f5; border:3px solid #059669; }
+  #b .job h3 { font-size:14.5px; }
+  #b .date { font-size:11.5px; font-weight:600; color:#059669; }
+  #b .sub { color:var(--muted); }
+  #b .proj { font-weight:700; margin:7px 0 1px; }
+  #b .tech { margin:3px 0 4px; }
+  #b .tag { background:#e1f3ec; color:#047857; }
+  #b .two { display:grid; grid-template-columns:1fr 1fr; gap:12mm; }
+  #b .muted { color:var(--muted); }
 
-  /* 3 Minimal */
-  #t3 { padding:18mm 18mm; font-size:12.5px; }
-  #t3 h1 { font-size:34px; font-weight:300; letter-spacing:-.01em; }
-  #t3 h1 b { font-weight:700; }
-  #t3 .role { color:#0e8a7d; font-weight:600; margin-top:2px; }
-  #t3 .contact { color:var(--muted); font-size:11.5px; margin:6px 0 14px; }
-  #t3 .sec { display:grid; grid-template-columns:30mm 1fr; gap:10px; padding:10px 0; border-top:1px solid var(--line); }
-  #t3 .sec > h2 { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#0e8a7d; padding-top:2px; }
+  /* C: Dev dark */
+  #c { background:#0d1117; color:#d6dde6; padding:14mm 14mm; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:12px; }
+  #c .muted { color:#8793a3; }
+  #c h1 { font-size:30px; color:#fff; font-weight:700; letter-spacing:-.02em; }
+  #c h1::before { content:"> "; color:#3fb950; }
+  #c .role { color:#3fb950; margin-top:4px; font-size:13px; }
+  #c .contact { margin-top:8px; color:#8793a3; font-size:11px; }
+  #c h2 { color:#79c0ff; font-size:12px; margin:16px 0 8px; font-weight:600; }
+  #c h2::before { content:"// "; color:#8793a3; }
+  #c .job { margin-bottom:12px; padding:10px 12px; border:1px solid #222b38; border-radius:10px; background:#111823; }
+  #c .job h3 { color:#fff; font-size:13px; }
+  #c .date { color:#d2a8ff; font-size:11px; }
+  #c .sub { color:#8793a3; }
+  #c .proj { color:#ffa657; margin:8px 0 1px; font-weight:600; }
+  #c .tech { margin:3px 0 4px; }
+  #c .tag { background:#1b2a3d; color:#79c0ff; border:1px solid #27405e; border-radius:6px; }
+  #c li::marker { color:#3fb950; }
+  #c .grid { display:grid; grid-template-columns:1fr 1fr; gap:10mm; }
 
-  @media (max-width:820px){ .page{ transform-origin:top left; } }
   @media print {
     @page { size:A4; margin:0; }
     body { background:#fff; }
@@ -73,17 +92,16 @@
 <body>
 <div class="bar">
   <b>Resume templates</b>
-  <button data-t="t1" class="on">1 · Classic</button>
-  <button data-t="t2">2 · Sidebar</button>
-  <button data-t="t3">3 · Minimal</button>
+  <button data-t="a" class="on">A · Aurora</button>
+  <button data-t="b">B · Timeline</button>
+  <button data-t="c">C · Dev dark</button>
   <button class="print" onclick="window.print()">Print / Save PDF</button>
 </div>
 <div class="stage">
-  <div class="page show" id="t1"></div>
-  <div class="page" id="t2"></div>
-  <div class="page" id="t3"></div>
+  <div class="page show" id="a"></div>
+  <div class="page" id="b"></div>
+  <div class="page" id="c"></div>
 </div>
-
 <script>
 const D = {
   name:"Rizwan Bin Mat Nawi", first:"Rizwan", last:"Bin Mat Nawi", role:"Mobile Developer (Android & iOS)",
@@ -125,55 +143,59 @@ const D = {
   extra:["KWSP Calculator (Flutter)","Spending Tracker (Flutter)","Putrajaya Mosque AR (Android)","To-Do-List (Next.js)","Unreal Engine Training (Aug 2024)"]
 };
 const li = a => "<ul>"+a.map(x=>"<li>"+x+"</li>").join("")+"</ul>";
+const tags = t => t.split(", ").map(x=>`<span class="tag">${x}</span>`).join("");
 const jobBody = j => j.projects
-  ? j.projects.map(p=>`<div class="proj">${p.n}</div><div class="tech">${p.t}</div>${li(p.b)}`).join("")
+  ? j.projects.map(p=>`<div class="proj">${p.n}</div><div class="tech">${tags(p.t)}</div>${li(p.b)}`).join("")
   : li(j.b);
-const jobs = (cls) => D.jobs.map(j=>`<div class="job"><div class="row"><h3>${j.co}</h3><span class="muted">${j.date}</span></div><div class="sub muted">${j.title}</div>${jobBody(j)}</div>`).join("");
+const jobs = (cls) => D.jobs.map(j=>`<div class="job"><div class="row"><h3>${j.co}</h3><span class="${cls||"muted"} date">${j.date}</span></div><div class="sub muted">${j.title}</div>${jobBody(j)}</div>`).join("");
 
-document.getElementById("t1").innerHTML = `
-  <div class="head"><h1>${D.name}</h1><div class="role">${D.role}</div><div class="contact">${D.contact.join(" · ")}</div></div>
-  <h2>Summary</h2><p>${D.summary}</p>
-  <h2>Experience</h2>${jobs()}
-  <h2>Education</h2><div class="row"><span><b>${D.edu.deg}</b>, ${D.edu.sch}</span><span class="muted">${D.edu.note}</span></div>
-  <h2>Skills</h2><p>${D.skills.join(" · ")}</p>
-  <h2>Projects &amp; Training</h2><p>${D.extra.join(" · ")}</p>
-  <h2>Languages</h2><p>${D.langs.join(" · ")}</p>`;
+document.getElementById("a").innerHTML = `
+  <div class="hero"><h1>${D.name}</h1><div class="role">${D.role}</div>
+    <div class="contact">${D.contact.map(c=>`<span>${c}</span>`).join("")}</div></div>
+  <div class="body">
+    <div><h2>Experience</h2>${jobs()}</div>
+    <div class="side">
+      <div class="card"><h2>Profile</h2><p>${D.summary}</p></div>
+      <div class="card"><h2>Skills</h2>${D.skills.map(s=>`<span class="tag">${s}</span>`).join("")}</div>
+      <div class="card"><h2>Education</h2><p><b>${D.edu.deg}</b></p><p class="muted">${D.edu.sch} · ${D.edu.note}</p></div>
+      <div class="card"><h2>Projects</h2>${li(D.extra)}</div>
+      <div class="card"><h2>Languages</h2><p>${D.langs.join(" · ")}</p></div>
+    </div>
+  </div>`;
 
-document.getElementById("t2").innerHTML = `
-  <aside>
-    <div class="avatar">R</div>
-    <h1>${D.first}<br>${D.last}</h1>
-    <div class="muted" style="margin-top:4px">${D.role}</div>
-    <h2>Contact</h2><ul>${D.contact.map(c=>`<li>${c}</li>`).join("")}</ul>
-    <h2>Skills</h2>${D.skills.map(s=>`<span class="chip">${s}</span>`).join("")}
-    <h2>Education</h2><p><b>${D.edu.deg}</b></p><p class="muted">${D.edu.sch}<br>${D.edu.note}</p>
-    <h2>Languages</h2><ul>${D.langs.map(l=>`<li>${l}</li>`).join("")}</ul>
-    <h2>Soft skills</h2><ul>${D.soft.map(l=>`<li>${l}</li>`).join("")}</ul>
-  </aside>
-  <main>
-    <section><h2>Profile</h2><p>${D.summary}</p></section>
-    <section><h2>Experience</h2>${jobs()}</section>
-    <section><h2>Projects &amp; Training</h2>${li(D.extra)}</section>
-  </main>`;
-
-document.getElementById("t3").innerHTML = `
-  <h1>${D.first} <b>${D.last}</b></h1>
+document.getElementById("b").innerHTML = `
+  <h1>${D.first} <span>${D.last}</span></h1>
   <div class="role">${D.role}</div>
-  <div class="contact">${D.contact.join("  ·  ")}</div>
-  <div class="sec"><h2>Profile</h2><p>${D.summary}</p></div>
-  <div class="sec"><h2>Experience</h2><div>${jobs()}</div></div>
-  <div class="sec"><h2>Skills</h2><p>${D.skills.join(", ")}</p></div>
-  <div class="sec"><h2>Education</h2><p><b>${D.edu.deg}</b> — ${D.edu.sch} · ${D.edu.note}</p></div>
-  <div class="sec"><h2>Other</h2><p>${D.extra.join(" · ")}<br><span class="muted">Languages: ${D.langs.join(", ")}</span></p></div>`;
+  <div class="contact">${D.contact.map(c=>`<span>${c}</span>`).join("")}</div>
+  <p class="lead">${D.summary}</p>
+  <h2>Experience</h2><div class="tl">${jobs()}</div>
+  <div class="two">
+    <div><h2>Skills</h2>${D.skills.map(s=>`<span class="tag">${s}</span>`).join("")}
+      <h2>Languages</h2><p>${D.langs.join(" · ")}</p></div>
+    <div><h2>Education</h2><p><b>${D.edu.deg}</b></p><p class="muted">${D.edu.sch} · ${D.edu.note}</p>
+      <h2>Projects &amp; training</h2>${li(D.extra)}</div>
+  </div>`;
+
+document.getElementById("c").innerHTML = `
+  <h1>${D.name}</h1><div class="role">${D.role}</div>
+  <div class="contact">${D.contact.join("  |  ")}</div>
+  <h2>profile</h2><p>${D.summary}</p>
+  <h2>experience</h2>${jobs()}
+  <div class="grid">
+    <div><h2>skills</h2>${D.skills.map(s=>`<span class="tag">${s}</span>`).join("")}
+      <h2>languages</h2><p>${D.langs.join(" · ")}</p></div>
+    <div><h2>education</h2><p style="color:#fff">${D.edu.deg}</p><p class="muted">${D.edu.sch} · ${D.edu.note}</p>
+      <h2>projects</h2>${li(D.extra)}</div>
+  </div>`;
 
 const btns=[...document.querySelectorAll(".bar button[data-t]")];
 function show(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.toggle("show",p.id===id));
   btns.forEach(b=>b.classList.toggle("on",b.dataset.t===id));
-  try{localStorage.setItem("tpl",id)}catch(e){}
+  try{localStorage.setItem("tpl2",id)}catch(e){}
 }
 btns.forEach(b=>b.onclick=()=>show(b.dataset.t));
-try{const s=localStorage.getItem("tpl"); if(s) show(s);}catch(e){}
+try{const s=localStorage.getItem("tpl2"); if(s) show(s);}catch(e){}
 </script>
 </body>
 </html>
