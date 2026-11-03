@@ -11,6 +11,7 @@ import '../services/zone_service.dart';
 import '../state/app_state.dart';
 import '../screens/reader_screen.dart';
 import '../theme.dart';
+import 'common.dart';
 
 // ------------------------------------------------------------------ qibla
 
@@ -420,4 +421,86 @@ void showSurahSheet(BuildContext context, Surah s, {VoidCallback? onListen}) {
       ]);
     });
   });
+}
+
+// ------------------------------------------------------------------ name
+
+/// Asks what to call the user. Shown once on first launch ([welcome]) and
+/// from Settings. No account: the name is saved on the phone only.
+Future<void> showNameSheet(BuildContext context, {bool welcome = false}) async {
+  final app = AppState.instance;
+  final input = TextEditingController(text: app.name);
+  await showGlassSheet(context, builder: (ctx) {
+    return StatefulBuilder(builder: (ctx, set) {
+      void save() {
+        app.setName(input.text);
+        Navigator.pop(ctx);
+      }
+
+      return Column(children: [
+        if (welcome) ...[
+          const Mascot(size: 72),
+          const SizedBox(height: 10),
+        ],
+        SheetTitle(welcome ? 'Assalamu alaikum' : 'Your name',
+            sub: 'What should ${app.botName} call you?'),
+        const SizedBox(height: 18),
+        Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          alignment: Alignment.centerLeft,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(26),
+            color: S.fill(.18),
+            border: Border.all(color: S.line(.35)),
+          ),
+          child: TextField(
+            controller: input,
+            autofocus: true,
+            maxLength: 30,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            onChanged: (_) => set(() {}),
+            onSubmitted: (_) => input.text.trim().isEmpty ? null : save(),
+            style: T.ui(16, c: S.text, w: FontWeight.w600),
+            cursorColor: Colors.white,
+            decoration: InputDecoration(
+              isCollapsed: true,
+              counterText: '',
+              border: InputBorder.none,
+              hintText: 'Your name',
+              hintStyle: T.ui(16, c: S.faint, w: FontWeight.w500),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(LucideIcons.lock, size: 13, color: S.muted),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text('No sign-in. Your name stays on this phone.',
+                style: T.ui(12.5, c: S.muted, w: FontWeight.w600)),
+          ),
+        ]),
+        const SizedBox(height: 18),
+        SheetButton(
+          label: welcome ? 'Continue' : 'Save',
+          enabled: input.text.trim().isNotEmpty,
+          onTap: save,
+        ),
+        if (welcome)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.pop(ctx),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 14, bottom: 2),
+              child: Text('Skip for now',
+                  style: T.ui(14, c: S.muted, w: FontWeight.w700)),
+            ),
+          ),
+      ]);
+    });
+  });
+  // Skipping or swiping away still counts as asked, so it shows only once.
+  if (welcome && !app.askedName) await app.setName(app.name);
 }

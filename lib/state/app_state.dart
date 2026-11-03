@@ -79,8 +79,14 @@ class AppState extends ChangeNotifier {
 
   // ---------- profile ----------
   Gender gender = Gender.female;
-  String get userName => gender == Gender.female ? 'Aisha' : 'Adam';
-  String get userFull => '$userName Rahman';
+
+  /// What the user asked to be called; stays on the phone only.
+  String name = '';
+  String get userName => name.isEmpty ? 'Friend' : name;
+  String get userFull => userName;
+
+  /// Whether the first-launch welcome card has been shown.
+  bool askedName = false;
   String get botName => gender == Gender.female ? 'Ayu' : 'Yun';
 
   // ---------- location & prayer times ----------
@@ -133,6 +139,8 @@ class AppState extends ChangeNotifier {
 
   void _load() {
     gender = Gender.values[_prefs.getInt('gender') ?? 0];
+    name = _prefs.getString('name') ?? '';
+    askedName = _prefs.getBool('askedName') ?? false;
     autoLocation = _prefs.getBool('autoLocation') ?? true;
     zoneCode = _prefs.getString('zone') ?? zoneCode;
     lat = _prefs.getDouble('lat') ?? lat;
@@ -329,6 +337,14 @@ class AppState extends ChangeNotifier {
     await _prefs.setInt('adhanSound', s.index);
     notifyListeners();
     PrayerAlerts.instance.reschedule();
+  }
+
+  Future<void> setName(String v) async {
+    name = v.trim();
+    askedName = true;
+    await _prefs.setString('name', name);
+    await _prefs.setBool('askedName', true);
+    notifyListeners();
   }
 
   Future<void> setReciter(int i) async {

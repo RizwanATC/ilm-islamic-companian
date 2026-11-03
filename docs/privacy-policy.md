@@ -2,8 +2,8 @@
 
 _Last updated: 2 November 2026_
 
-Ilm is a prayer times, Quran and daily reminder app. It has no accounts, no ads and no
-analytics. This page explains what leaves your phone and why.
+Ilm is a prayer times, Quran and daily reminder app. It has no sign-in, no accounts, no ads
+and no analytics. The name you give the app is saved on your phone only and never sent anywhere. This page explains what leaves your phone and why.
 
 ## Location
 
@@ -24,7 +24,7 @@ contain only which surah or ayah you asked for.
 
 ## Chat with Yun or Ayu
 
-When you send a message in the chat, the conversation so far, your app display name, the
+When you send a message in the chat, the conversation so far, the
 place name shown in the app, and today's prayer times are sent to our server and passed to
 Anthropic's Claude to write the reply. Messages are not used to identify you and are not
 stored by Ilm after the reply is sent. Anthropic processes them under its commercial terms,

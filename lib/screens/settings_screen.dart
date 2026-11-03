@@ -56,6 +56,9 @@ class SettingsScreen extends StatelessWidget {
           ]),
         ),
         _label('You'),
+        _row(LucideIcons.user, C.rose, 'Name',
+            value: app.name.isEmpty ? 'Add' : app.name,
+            onTap: () => showNameSheet(context)),
         _row(LucideIcons.heart, C.rose, 'Gender',
             trailing: _GenderSwitch(
               value: app.gender,

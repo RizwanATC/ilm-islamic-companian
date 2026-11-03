@@ -40,7 +40,6 @@ class YunAi {
                 {'role': me ? 'user' : 'assistant', 'content': text},
             ],
             'context': {
-              'name': app.userName,
               'botName': app.botName,
               'place': app.placeName,
               'today': now.toIso8601String().substring(0, 10),

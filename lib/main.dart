@@ -15,6 +15,7 @@ import 'services/prayer_alerts.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
 import 'widgets/common.dart';
+import 'widgets/sheets.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -96,6 +97,10 @@ class _ShellState extends State<Shell> {
   @override
   void initState() {
     super.initState();
+    if (!AppState.instance.askedName) {
+      WidgetsBinding.instance.addPostFrameCallback(
+          (_) => mounted ? showNameSheet(context, welcome: true) : null);
+    }
     for (var i = 0; i < 3; i++) {
       _controllers[i].addListener(() {
         if (i != _tab) return;
